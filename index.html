@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Globe with Satellite Orbits</title>
+    <script src="https://unpkg.com/three/build/three.min.js"></script>
+    <script src="https://unpkg.com/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/globe.gl"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="globeViz"></div>
+    <script src="src/components/Globe.js" type="module"></script>
+    <script src="src/components/OrbitControls.js" type="module"></script>
+    <script src="src/utils/OrbitalCalculator.js" type="module"></script>
+    <script src="src/SatelliteManager.js" type="module"></script>
+    <script src="satelliteData.js" type="module"></script>
+    <script src="src/App.js" type="module"></script>
+    <script src="main.js" type="module"></script>
+</body>
+</html>
