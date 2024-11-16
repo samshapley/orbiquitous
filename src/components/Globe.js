@@ -15,21 +15,7 @@ class GlobeVisualization {
         // Initialize scene
         this.scene = new THREE.Scene();
         
-        // Initialize camera with far starting position
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 30000);
-        this.camera.position.set(0, 0, 30000);
-        this.camera.lookAt(0, 0, 0);
-
-        // Initialize renderer
-        this.renderer = new THREE.WebGLRenderer({ 
-            antialias: true,
-            alpha: true,
-            powerPreference: "high-performance"
-        });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        
-        // Get container and append renderer
+        // Get container and create visualization container
         this.container = document.getElementById(containerId);
         if (!this.container) {
             throw new Error(`Container with id '${containerId}' not found.`);
@@ -42,15 +28,36 @@ class GlobeVisualization {
             this.vizContainer.id = 'globeViz';
             this.container.appendChild(this.vizContainer);
         }
-        
-        // Append renderer to the visualization container
-        this.vizContainer.appendChild(this.renderer.domElement);
-        
-        // Make sure the renderer's canvas can receive events
+    
+        // Get the container's dimensions
+        const width = this.container.clientWidth || window.innerWidth;
+        const height = this.container.clientHeight || window.innerHeight;
+    
+        // Initialize camera (only once)
+        this.camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 30000);
+        this.camera.position.set(0, 0, 30000);
+        this.camera.lookAt(0, 0, 0);
+    
+        // Initialize renderer (only once)
+        this.renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+        });
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setSize(width, height);
+    
+        // Ensure the canvas fills its container
+        this.renderer.domElement.style.width = '100%';
+        this.renderer.domElement.style.height = '100%';
         this.renderer.domElement.style.position = 'absolute';
         this.renderer.domElement.style.top = '0';
         this.renderer.domElement.style.left = '0';
         this.renderer.domElement.style.zIndex = '1';
+        this.renderer.domElement.style.pointerEvents = 'auto';
+    
+        // Append renderer to the visualization container
+        this.vizContainer.appendChild(this.renderer.domElement);
 
         // Initialize globe
         this.globe = new ThreeGlobe()
@@ -75,9 +82,6 @@ class GlobeVisualization {
 
         // Adjust globe size
         this.globe.scale.set(1.2, 1.2, 1.2);
-
-        // Add globe to scene
-        this.scene.add(this.globe);
 
         // Enhanced lighting
         const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8);
@@ -115,9 +119,6 @@ class GlobeVisualization {
         // Start animation
         this.animate();
 
-        // Handle window resize
-        window.addEventListener('resize', this.onWindowResize.bind(this));
-
         this.satellites = [];
         
         // Add method call after globe initialization
@@ -136,7 +137,8 @@ class GlobeVisualization {
         this.hoveredSatellite = null;
         this.selectedSatellite = null;
 
-        // Add event listener for clicks
+        // Add event listeners
+        window.addEventListener('resize', this.onWindowResize.bind(this));
         this.renderer.domElement.addEventListener('click', this.onClick.bind(this), false);
         this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this), false);
 
@@ -146,10 +148,14 @@ class GlobeVisualization {
         const toggleButton = document.getElementById('toggleRotation');
         if (toggleButton) {
             toggleButton.addEventListener('click', () => {
+                // Toggle both the controls auto-rotation and the manual rotation
                 this.controls.autoRotate = !this.controls.autoRotate;
+                this.isGlobeRotating = !this.isGlobeRotating; // Add this new property
                 toggleButton.textContent = this.controls.autoRotate ? 'Stop Rotation' : 'Start Rotation';
             });
         }
+        // Initialize the rotation state
+        this.isGlobeRotating = true;
     }
 
     initializeSatelliteVisualization() {
@@ -250,6 +256,7 @@ class GlobeVisualization {
 
 
     onClick(event) {
+        event.preventDefault();
         // Get mouse position in normalized device coordinates (-1 to +1)
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -274,6 +281,7 @@ class GlobeVisualization {
     }
 
     onMouseMove(event) {
+        event.preventDefault();
         // Get mouse position in normalized device coordinates (-1 to +1)
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -362,10 +370,14 @@ class GlobeVisualization {
         this.scene.add(this.starField);
     }
 
+    // Add this method to handle container sizing
     onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        const width = this.container.clientWidth || window.innerWidth;
+        const height = this.container.clientHeight || window.innerHeight;
+        
+        this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(width, height);
     }
 
     animate() {
@@ -398,8 +410,8 @@ class GlobeVisualization {
             }
         }
 
-        // Rotate the container instead of the globe directly
-        if (this.globeContainer) {
+        // Only rotate the container if rotation is enabled
+        if (this.globeContainer && this.isGlobeRotating) {
             this.globeContainer.rotation.y += 0.001;
         }
         
