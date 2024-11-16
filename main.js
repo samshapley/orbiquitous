@@ -6,18 +6,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Handle navigation
     const handleNavigation = (path) => {
-        const globeViz = document.getElementById('globeViz');
+        const globeContainer = document.getElementById('globe-container');
         const learnContent = document.getElementById('learn-content');
         const aboutContent = document.getElementById('about-content');
         const navLinks = document.querySelectorAll('nav a');
-        
+        const satelliteInfo = document.getElementById('satelliteInfo');
+
         // Remove active class from all links
         navLinks.forEach(link => link.classList.remove('active'));
         
         // Hide all content first
-        globeViz.style.display = 'none';
+        globeContainer.style.display = 'none';
         learnContent.style.display = 'none';
         aboutContent.style.display = 'none';
+        if (satelliteInfo) {
+            satelliteInfo.style.display = 'none'; // Ensure info container is hidden on navigation
+        }
         
         // Show appropriate content based on path
         switch(path) {
@@ -31,13 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case '/':
             case '':
-                globeViz.style.display = 'block';
+                globeContainer.style.display = 'block';
                 document.querySelector('[data-page="home"]').classList.add('active');
-                app.initialize()
+                app.initialize();
                 break;
 
             default:
-                globeViz.style.display = 'block';
+                globeContainer.style.display = 'block';
                 document.querySelector('[data-page="home"]').classList.add('active');
                 app.initialize();
                 break;

@@ -1,9 +1,17 @@
 import ThreeGlobe from 'three-globe';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { 
+    twoline2satrec, 
+    propagate, 
+    gstime, 
+    eciToGeodetic, 
+    degreesLat, 
+    degreesLong 
+} from 'satellite.js';
 
 class GlobeVisualization {
-    constructor(containerId) {
+    constructor(containerId, onSatelliteClick) {
         // Initialize scene
         this.scene = new THREE.Scene();
         
@@ -26,7 +34,23 @@ class GlobeVisualization {
         if (!this.container) {
             throw new Error(`Container with id '${containerId}' not found.`);
         }
-        this.container.appendChild(this.renderer.domElement);
+        
+        // Find or create the visualization container
+        this.vizContainer = document.getElementById('globeViz');
+        if (!this.vizContainer) {
+            this.vizContainer = document.createElement('div');
+            this.vizContainer.id = 'globeViz';
+            this.container.appendChild(this.vizContainer);
+        }
+        
+        // Append renderer to the visualization container
+        this.vizContainer.appendChild(this.renderer.domElement);
+        
+        // Make sure the renderer's canvas can receive events
+        this.renderer.domElement.style.position = 'absolute';
+        this.renderer.domElement.style.top = '0';
+        this.renderer.domElement.style.left = '0';
+        this.renderer.domElement.style.zIndex = '1';
 
         // Initialize globe
         this.globe = new ThreeGlobe()
@@ -93,6 +117,225 @@ class GlobeVisualization {
 
         // Handle window resize
         window.addEventListener('resize', this.onWindowResize.bind(this));
+
+        this.satellites = [];
+        
+        // Add method call after globe initialization
+        this.initializeSatelliteVisualization();
+
+        // Store the callback for satellite clicks
+        this.onSatelliteClick = onSatelliteClick;
+
+        // Initialize raycaster and mouse vector
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+
+        this.initializeRotationControl();
+
+        // Variables to track hovered and selected satellites
+        this.hoveredSatellite = null;
+        this.selectedSatellite = null;
+
+        // Add event listener for clicks
+        this.renderer.domElement.addEventListener('click', this.onClick.bind(this), false);
+        this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+
+    }
+
+    initializeRotationControl() {
+        const toggleButton = document.getElementById('toggleRotation');
+        if (toggleButton) {
+            toggleButton.addEventListener('click', () => {
+                this.controls.autoRotate = !this.controls.autoRotate;
+                toggleButton.textContent = this.controls.autoRotate ? 'Stop Rotation' : 'Start Rotation';
+            });
+        }
+    }
+
+    initializeSatelliteVisualization() {
+        // Create a satellite object group
+        this.satellitesGroup = new THREE.Group();
+        // Add the group directly to the scene, not the globe
+        this.scene.add(this.satellitesGroup);
+        
+        // Debug log
+        console.log('Satellite group initialized:', this.satellitesGroup);
+    }
+
+    updateSatellites(satelliteData) {
+        console.log('Updating satellites with data:', satelliteData);
+        this.satellites = satelliteData;
+
+        // Clear existing satellites
+        while(this.satellitesGroup.children.length) {
+            this.satellitesGroup.remove(this.satellitesGroup.children[0]);
+        }
+
+        console.log('Cleared existing satellites:', this.satellitesGroup.children);
+
+        // Current time
+        const now = new Date();
+
+        // Parse TLE data and compute positions
+        const processedSatellites = this.satellites.map((satellite, index) => {
+            try {
+                const tleLine1 = satellite.line1;
+                const tleLine2 = satellite.line2;
+
+                // Generate a satellite record
+                const satrec = twoline2satrec(tleLine1, tleLine2);
+
+                // Get position and velocity vectors
+                const positionAndVelocity = propagate(satrec, now);
+                const positionEci = positionAndVelocity.position;
+
+                if (positionEci) {
+                    // Convert ECI to geodetic coordinates (latitude, longitude, altitude)
+                    const gmst = gstime(now);
+                    const positionGd = eciToGeodetic(positionEci, gmst);
+
+                    const latitude = degreesLat(positionGd.latitude);
+                    const longitude = degreesLong(positionGd.longitude);
+                    const altitude = positionGd.height;
+
+                    console.log(`Satellite ${index} position:`, { latitude, longitude, altitude });
+
+                    return {
+                        id: satellite.satelliteId,
+                        name: satellite.name,
+                        latitude,
+                        longitude,
+                        altitude
+                    };
+                } else {
+                    console.warn(`No position data for satellite ${index}`);
+                    return null;
+                }
+            } catch (error) {
+                console.error(`Failed to process satellite ${index}:`, error);
+                return null;
+            }
+        }).filter(sat => sat !== null); // Remove null entries
+
+        // Update globe with processed satellite positions
+        this.globe
+            .objectsData(processedSatellites)
+            .objectLat(d => d.latitude)
+            .objectLng(d => d.longitude)
+            .objectAltitude(d => d.altitude / 6371) // Normalize altitude relative to Earth's radius
+            .objectThreeObject(d => {
+                console.log('Creating satellite mesh for:', d);
+                const satelliteMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff0000, // Red color
+                    transparent: true,
+                    opacity: 0.8 // Adjust opacity for glowing effect
+                });
+
+                const satelliteMesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.7, 8, 8),
+                    satelliteMaterial
+                );
+
+                // Attach satellite data to mesh for reference on click
+                satelliteMesh.userData = d;
+
+                this.satellitesGroup.add(satelliteMesh);
+
+                return satelliteMesh;
+            });
+
+        // Add debug log after setting up objects
+        console.log('Globe objects after update:', this.globe.objectsData());
+    }
+
+
+    onClick(event) {
+        // Get mouse position in normalized device coordinates (-1 to +1)
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        // Update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        // Calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects(this.satellitesGroup.children, true);
+
+        if (intersects.length > 0) {
+            const selectedSatellite = intersects[0].object.userData;
+            console.log('Satellite clicked:', selectedSatellite);
+            if (this.onSatelliteClick) {
+                this.onSatelliteClick(selectedSatellite);
+            }
+
+            // Update visual state for selected satellite
+            this.selectSatellite(intersects[0].object);
+        }
+    }
+
+    onMouseMove(event) {
+        // Get mouse position in normalized device coordinates (-1 to +1)
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        // Update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        // Calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects(this.satellitesGroup.children, true);
+
+        if (intersects.length > 0) {
+            const hoveredObject = intersects[0].object;
+            if (this.hoveredSatellite !== hoveredObject) {
+                // Reset previous hovered satellite
+                if (this.hoveredSatellite && this.hoveredSatellite !== this.selectedSatellite) {
+                    this.hoveredSatellite.material.color.set(0xff0000); // Original color
+                    this.hoveredSatellite.scale.set(1, 1, 1); // Original scale
+                }
+
+                // Set new hovered satellite
+                this.hoveredSatellite = hoveredObject;
+                if (this.hoveredSatellite !== this.selectedSatellite) {
+                    this.hoveredSatellite.material.color.set(0x66b2ff); // Pale blue
+                    this.hoveredSatellite.scale.set(1.3, 1.3, 1.3); // Slightly bigger
+                }
+            }
+        } else {
+            // Reset previous hovered satellite
+            if (this.hoveredSatellite && this.hoveredSatellite !== this.selectedSatellite) {
+                this.hoveredSatellite.material.color.set(0xff0000); // Original color
+                this.hoveredSatellite.scale.set(1, 1, 1); // Original scale
+                this.hoveredSatellite = null;
+            }
+        }
+    }
+
+    selectSatellite(satelliteMesh) {
+        // Reset previous selected satellite
+        if (this.selectedSatellite) {
+            this.selectedSatellite.material.color.set(0xff0000); // Original color
+            this.selectedSatellite.scale.set(1, 1, 1); // Original scale
+        }
+
+        // Set new selected satellite
+        this.selectedSatellite = satelliteMesh;
+        this.selectedSatellite.material.color.set(0x66b2ff); // Pale blue
+        this.selectedSatellite.scale.set(1.5, 1.5, 1.5); // Slightly bigger
+
+        // Optional: Reset hoveredSatellite if it's the same as selected
+        if (this.hoveredSatellite === this.selectedSatellite) {
+            this.hoveredSatellite = null;
+        }
+    }
+
+    // Optionally, add a method to reset selection
+    resetSelection() {
+        if (this.selectedSatellite) {
+            this.selectedSatellite.material.color.set(0xff0000); // Original color
+            this.selectedSatellite.scale.set(1, 1, 1); // Original scale
+            this.selectedSatellite = null;
+        }
     }
 
     addStarsBackground() {
@@ -163,6 +406,7 @@ class GlobeVisualization {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
     }
+
 }
 
 export default GlobeVisualization;

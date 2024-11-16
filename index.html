@@ -21,7 +21,20 @@
             </ul>
         </nav>
     </header>
-    <div id="globeViz"></div>
+    <div id="globe-container">
+        <div id="globeViz"></div>
+        <button id="toggleRotation" class="control-button">Stop Rotation</button>
+    </div>
+
+    <!-- New Satellite Info Container -->
+    <div id="satelliteInfo" class="satellite-info hidden">
+        <button id="closeInfo">×</button>
+        <h2 id="satelliteName">Satellite Name</h2>
+        <p><strong>ID:</strong> <span id="satelliteId"></span></p>
+        <p><strong>Latitude:</strong> <span id="satelliteLat"></span></p>
+        <p><strong>Longitude:</strong> <span id="satelliteLng"></span></p>
+        <p><strong>Altitude:</strong> <span id="satelliteAlt"></span> km</p>
+    </div>
     <div id="learn-content" class="page-content" style="display: none">
         <h1>Learn About Satellites</h1>
         <p>This is the learning page placeholder content.</p>
