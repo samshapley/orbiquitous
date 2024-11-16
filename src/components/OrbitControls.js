@@ -1,10 +1,9 @@
-// Since THREE is loaded globally via script tag, we can use it directly
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+
 class OrbitControlsManager {
     constructor(camera, renderer) {
-        if (typeof THREE === 'undefined') {
-            throw new Error('THREE is not loaded. Ensure three.js is loaded before OrbitControls.');
-        }
-        this.controls = new THREE.OrbitControls(camera, renderer.domElement);
+        this.controls = new OrbitControls(camera, renderer.domElement);
         this.setupControls();
     }
 

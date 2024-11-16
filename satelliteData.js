@@ -39,3 +39,5 @@ const satelliteData = [
         color: '#0000ff'
     }
 ];
+
+export default satelliteData;

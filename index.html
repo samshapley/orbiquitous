@@ -3,20 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Globe with Satellite Orbits</title>
-    <script src="https://unpkg.com/three/build/three.min.js"></script>
-    <script src="https://unpkg.com/three/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://unpkg.com/globe.gl"></script>
+    <title>Orbiquitous</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script type="module" src="main.js"></script>
 </head>
 <body>
+    <header>
+        <nav>
+            <div class="logo">Orbiquitous</div>
+            <ul>
+                <li><a href="/" class="active" data-page="home">Home</a></li>
+                <li><a href="/learn" data-page="learn">Learn</a></li>
+                <li><a href="/about" data-page="about">About</a></li>
+            </ul>
+        </nav>
+    </header>
     <div id="globeViz"></div>
-    <script src="src/components/Globe.js" type="module"></script>
-    <script src="src/components/OrbitControls.js" type="module"></script>
-    <script src="src/utils/OrbitalCalculator.js" type="module"></script>
-    <script src="src/SatelliteManager.js" type="module"></script>
-    <script src="satelliteData.js" type="module"></script>
-    <script src="src/App.js" type="module"></script>
-    <script src="main.js" type="module"></script>
+    <div id="learn-content" class="page-content" style="display: none">
+        <h1>Learn About Satellites</h1>
+        <p>This is the learning page placeholder content.</p>
+    </div>
+    <div id="about-content" class="page-content" style="display: none">
+        <h1>About Us</h1>
+        <p>This is the about page placeholder content.</p>
+    </div>
 </body>
 </html>

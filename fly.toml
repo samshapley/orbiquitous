@@ -1,0 +1,22 @@
+# fly.toml app configuration file generated for orbiquitous-old-moon-2135 on 2024-11-16T11:56:20Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'orbiquitous-old-moon-2135'
+primary_region = 'lhr'
+
+[build]
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 1
