@@ -6,6 +6,7 @@
     <title>Orbiquitous</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="main.js"></script>
@@ -36,6 +37,14 @@
         <p><strong>Longitude:</strong> <span id="satelliteLng"></span></p>
         <p><strong>Altitude:</strong> <span id="satelliteAlt"></span> km</p>
     </div>
+    <div id="weatherInfo" class="weather-info hidden">
+        <button id="closeWeatherInfo">×</button>
+        <h2>Weather Information</h2>
+        <hr>
+        <p><strong>Temperature:</strong> <span id="temperature"></span></p>
+        <p><strong>Conditions:</strong> <span id="conditions"></span></p>
+        <p><strong>Location:</strong> <span id="location"></span></p>
+    </div>
     <div id="learn-content" class="page-content" style="display: none">
         <h1>Learn About Satellites</h1>
         <p>This is the learning page placeholder content.</p>
@@ -48,7 +57,6 @@
     <div id="mode-controls" class="mode-controls">
         <button id="satellite-mode" class="mode-button">Satellites</button>
         <button id="weather-mode" class="mode-button">Weather</button>
-        <button id="forest-mode" class="mode-button">Forests</button>
     </div>
 </body>
 </html>

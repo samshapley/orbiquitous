@@ -1,3 +1,7 @@
+.hidden {
+    display: none;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -147,7 +151,6 @@ canvas {
     pointer-events: all;
 }
 
-/* Control Button should be above the canvas */
 .control-button {
     position: fixed;
     bottom: 20px;
@@ -155,12 +158,17 @@ canvas {
     background-color: rgba(0, 0, 0, 0.8);
     color: white;
     border: 1px solid #00ffff;
-    padding: 10px 20px;
+    padding: 10px;  /* Reduced padding to make it more square */
+    width: 42px;    /* Fixed width for square button */
+    height: 42px;   /* Fixed height for square button */
     border-radius: 5px;
     font-family: 'Orbitron', sans-serif;
     cursor: pointer;
     z-index: 1000;
     transition: all 0.3s ease;
+    display: flex;           /* Added for icon centering */
+    align-items: center;     /* Added for icon centering */
+    justify-content: center; /* Added for icon centering */
 }
 
 .control-button:hover {

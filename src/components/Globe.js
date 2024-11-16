@@ -191,14 +191,18 @@ class GlobeVisualization {
     initializeRotationControl() {
         const toggleButton = document.getElementById('toggleRotation');
         if (toggleButton) {
+            // Set initial icon
+            toggleButton.innerHTML = '<i class="fas fa-pause"></i>';
+            
             toggleButton.addEventListener('click', () => {
-                // Toggle both the controls auto-rotation and the manual rotation
                 this.controls.autoRotate = !this.controls.autoRotate;
-                this.isGlobeRotating = !this.isGlobeRotating; // Add this new property
-                toggleButton.textContent = this.controls.autoRotate ? 'Stop Rotation' : 'Start Rotation';
+                this.isGlobeRotating = !this.isGlobeRotating;
+                // Update icon based on state
+                toggleButton.innerHTML = this.controls.autoRotate ? 
+                    '<i class="fas fa-pause"></i>' : 
+                    '<i class="fas fa-play"></i>';
             });
         }
-        // Initialize the rotation state
         this.isGlobeRotating = true;
     }
 
