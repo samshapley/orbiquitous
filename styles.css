@@ -18,6 +18,7 @@ header {
     z-index: 1000;
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);  /* Added this line */
 }
 
 nav {
@@ -208,7 +209,7 @@ canvas {
     position: fixed;
     left: 20px;
     top: 80px;
-    width: 300px;
+    width: 400px;
     height: 400px;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
@@ -233,7 +234,7 @@ canvas {
     padding: 15px;
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.7rem;
 }
 
 #chat-input {
@@ -246,7 +247,7 @@ canvas {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     resize: none;
     height: 40px;
-    font-size: 0.9rem;
+    font-size: 0.7rem;
 }
 
 #send-message {
@@ -280,4 +281,52 @@ canvas {
 .assistant-message {
     background: rgba(255, 255, 255, 0.1);
     margin-right: auto;
+    line-height: 1.4;
+}
+
+/* Markdown styles */
+.assistant-message p {
+    margin: 0.5em 0;
+}
+
+.assistant-message code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85em;
+}
+
+.assistant-message pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+.assistant-message pre code {
+    background: none;
+    padding: 0;
+}
+
+.assistant-message ul, .assistant-message ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.assistant-message blockquote {
+    border-left: 3px solid rgba(0, 255, 255, 0.3);
+    margin: 0.5em 0;
+    padding-left: 1em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.assistant-message a {
+    color: #00ffff;
+    text-decoration: none;
+}
+
+.assistant-message a:hover {
+    text-decoration: underline;
 }

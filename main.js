@@ -1,18 +1,23 @@
 import App from './src/App.js';
-import { getChatResponse } from './groq_api.js';
+import { getSatelliteChatResponse, resetConversation } from './groq_api.js';
 
 // Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
 
     await new Promise(resolve => setTimeout(resolve, 100));
 
+    let app;
     try {
-        const app = new App();
+        app = new App();
     } catch (error) {
         console.error('Error initializing app:', error);
     }
 
+    resetConversation();
 
+    // Hide chat panel initially
+    const chatPanel = document.getElementById('chat-panel');
+    if (chatPanel) chatPanel.style.display = 'none';
 
     // Add chat functionality
     const chatInput = document.getElementById('chat-input');
@@ -24,29 +29,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    async function handleChat() {
+    async function handleSatelliteChat() {
         const message = chatInput.value.trim();
         if (!message) return;
-
+    
         // Add user message to chat
         const userMessageDiv = document.createElement('div');
         userMessageDiv.className = 'message user-message';
         userMessageDiv.textContent = message;
         chatMessages.appendChild(userMessageDiv);
-
+    
         // Clear input
         chatInput.value = '';
-
+    
         // Create assistant message container
         const assistantMessageDiv = document.createElement('div');
         assistantMessageDiv.className = 'message assistant-message';
         chatMessages.appendChild(assistantMessageDiv);
-
+    
         try {
-            const stream = await getChatResponse(message);
+            // Get satellite data from the globe's satellitesGroup
+            const satelliteData = [];
+            if (app?.globe?.satellitesGroup) {
+                app.globe.satellitesGroup.children.forEach(satelliteMesh => {
+                    if (satelliteMesh.userData) {
+                        satelliteData.push(satelliteMesh.userData);
+                    }
+                });
+            }
+            
+            console.log('Sending satellite data to chat');
+
+            let accumulatedText = '';
+            const stream = await getSatelliteChatResponse(message, satelliteData);
             for await (const chunk of stream) {
                 const content = chunk.choices[0]?.delta?.content || "";
-                assistantMessageDiv.textContent += content;
+                accumulatedText += content;
+                // Render the accumulated markdown
+                assistantMessageDiv.innerHTML = marked.parse(accumulatedText);
+                // Syntax highlighting for code blocks (optional)
+                assistantMessageDiv.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         } catch (error) {
@@ -55,11 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    sendButton.addEventListener('click', handleChat);
+    sendButton.addEventListener('click', handleSatelliteChat);
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleChat();
+            handleSatelliteChat();
         }
     });
     

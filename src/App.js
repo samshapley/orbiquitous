@@ -8,35 +8,72 @@ class App {
         this.handleSatelliteClick = this.handleSatelliteClick.bind(this);
         this.closeSatelliteInfo = this.closeSatelliteInfo.bind(this);
     
-        // Initialize GlobeVisualization with a callback for satellite clicks
-        this.globe = new GlobeVisualization('globe-container');
+        // Initialize properties
+        this.globe = null;
         this.tleApi = new TleAPI();
         this.eonetApi = new EonetAPI();
-
-        this.initSatelliteInfoElements();
-    
-        this.initControlPanel();
-
         this.satellitesGroup = null;
 
+        // Initialize after a short delay to ensure DOM is ready
+        this.init();
+    }
+
+    async init() {
+        // Wait for DOM to be fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initializeComponents());
+        } else {
+            this.initializeComponents();
+        }
+    }
+
+    initializeComponents() {
+        // Initialize globe only after container is available
+        const globeContainer = document.getElementById('globe-container');
+        if (globeContainer) {
+            this.globe = new GlobeVisualization('globe-container');
+        }
+
+        this.initSatelliteInfoElements();
+        this.initControlPanel();
     }
 
     initControlPanel() {
         const controlPanel = document.getElementById('mode-controls');
-        
-        // Add event listeners to mode buttons
-        document.getElementById('satellite-mode').addEventListener('click', () => this.enableMode('satellite'));
-        document.getElementById('weather-mode').addEventListener('click', () => this.enableMode('weather'));
-        document.getElementById('forest-mode').addEventListener('click', () => this.enableMode('forest'));
+        if (!controlPanel) {
+            console.error('Control panel element not found. Make sure the HTML includes an element with id "mode-controls"');
+            return;
+        }
+
+        const controls = {
+            'satellite-mode': () => this.enableMode('satellite'),
+            'weather-mode': () => this.enableMode('weather'),
+        };
+
+        // Add listeners for each control
+        Object.entries(controls).forEach(([id, handler]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('click', handler);
+            } else {
+                console.error(`Control button "${id}" not found`);
+            }
+        });
     }
 
     async enableMode(mode) {
         // Clear current globe state
         this.globe.clearGlobe();
         
+        // Get chat panel
+        const chatPanel = document.getElementById('chat-panel');
+        
         // Handle different modes
         switch(mode) {
             case 'satellite':
+                // Show chat panel
+                if (chatPanel) chatPanel.style.display = 'flex';
+                
                 // Initialize satellite mode first, then fetch and update data
                 this.globe.enableSatelliteMode(this.handleSatelliteClick);
                 try {
@@ -53,13 +90,11 @@ class App {
                 }
                 break;
             case 'weather':
-                // Placeholder for weather mode
+                // Hide chat panel
+                if (chatPanel) chatPanel.style.display = 'none';
+                
                 await this.enableWeatherMode();
                 console.log('Weather mode selected');
-                break;
-            case 'forest':
-                // Placeholder for forest mode
-                console.log('Forest mode selected');
                 break;
         }
     }
@@ -72,8 +107,8 @@ class App {
     
             const events = await this.eonetApi.getEvents({
                 status: 'open',
-                category: 'severeStorms',
-                limit: 50
+                category: '',
+                limit: 1000
             });
     
             if (!events || events.length === 0) {
