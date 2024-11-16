@@ -33,12 +33,12 @@ class GlobeVisualization {
         const width = this.container.clientWidth || window.innerWidth;
         const height = this.container.clientHeight || window.innerHeight;
     
-        // Initialize camera (only once)
+        // Initialize camera
         this.camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 30000);
         this.camera.position.set(0, 0, 30000);
         this.camera.lookAt(0, 0, 0);
     
-        // Initialize renderer (only once)
+        // Initialize renderer
         this.renderer = new THREE.WebGLRenderer({ 
             antialias: true,
             alpha: true,
@@ -54,7 +54,7 @@ class GlobeVisualization {
         this.renderer.domElement.style.top = '0';
         this.renderer.domElement.style.left = '0';
         this.renderer.domElement.style.zIndex = '1';
-        this.renderer.domElement.style.pointerEvents = 'auto';
+
     
         // Append renderer to the visualization container
         this.vizContainer.appendChild(this.renderer.domElement);
@@ -119,14 +119,6 @@ class GlobeVisualization {
         // Start animation
         this.animate();
 
-        this.satellites = [];
-        
-        // Add method call after globe initialization
-        this.initializeSatelliteVisualization();
-
-        // Store the callback for satellite clicks
-        this.onSatelliteClick = onSatelliteClick;
-
         // Initialize raycaster and mouse vector
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -137,11 +129,63 @@ class GlobeVisualization {
         this.hoveredSatellite = null;
         this.selectedSatellite = null;
 
+        // Current mode state
+        this.currentMode = 'default';
+
         // Add event listeners
         window.addEventListener('resize', this.onWindowResize.bind(this));
         this.renderer.domElement.addEventListener('click', this.onClick.bind(this), false);
         this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this), false);
 
+        this.renderer.domElement.style.pointerEvents = 'auto';
+
+    }
+
+    clearGlobe() {
+        // Clear satellites
+        if (this.satellitesGroup) {
+            while(this.satellitesGroup.children.length) {
+                this.satellitesGroup.remove(this.satellitesGroup.children[0]);
+            }
+            this.globe.remove(this.satellitesGroup);
+            this.satellitesGroup = null;
+        }
+    
+        // Clear weather events
+        this.globe.hexPolygonsData([]);
+        
+        // Reset any mode-specific properties
+        this.hoveredSatellite = null;
+        this.selectedSatellite = null;
+    
+        // Remove event listeners
+        this.renderer.domElement.removeEventListener('click', this.onClick.bind(this));
+        this.renderer.domElement.removeEventListener('mousemove', this.onMouseMove.bind(this));
+    }
+
+    // New method to enable satellite mode
+    enableSatelliteMode(onSatelliteClick) {
+        this.clearGlobe();
+        this.currentMode = 'satellite';
+        this.onSatelliteClick = onSatelliteClick;
+        
+        this.satellitesGroup = new THREE.Group();
+        this.globe.add(this.satellitesGroup);
+        
+        this.renderer.domElement.style.pointerEvents = 'auto';
+    }
+
+    // Add new mode enablers
+    enableWeatherMode() {
+        this.clearGlobe();
+        this.currentMode = 'weather';
+        // Initialize weather-specific setup
+    }
+
+    enableDefaultMode() {
+        this.clearGlobe();
+        this.currentMode = 'default';
+        // Initialize default mode setup
     }
 
     initializeRotationControl() {
@@ -161,161 +205,269 @@ class GlobeVisualization {
     initializeSatelliteVisualization() {
         // Create a satellite object group
         this.satellitesGroup = new THREE.Group();
-        // Add the group directly to the scene, not the globe
-        this.scene.add(this.satellitesGroup);
         
-        // Debug log
+        // Add to the globe object instead of the scene
+        this.globe.add(this.satellitesGroup);
+        
         console.log('Satellite group initialized:', this.satellitesGroup);
     }
-
+    
     updateSatellites(satelliteData) {
         console.log('Updating satellites with data:', satelliteData);
         this.satellites = satelliteData;
-
+    
         // Clear existing satellites
         while(this.satellitesGroup.children.length) {
             this.satellitesGroup.remove(this.satellitesGroup.children[0]);
         }
-
-        console.log('Cleared existing satellites:', this.satellitesGroup.children);
-
-        // Current time
-        const now = new Date();
-
-        // Parse TLE data and compute positions
-        const processedSatellites = this.satellites.map((satellite, index) => {
+    
+        // Process satellites and create meshes
+        this.satellites.forEach((satellite, index) => {
             try {
-                const tleLine1 = satellite.line1;
-                const tleLine2 = satellite.line2;
-
-                // Generate a satellite record
-                const satrec = twoline2satrec(tleLine1, tleLine2);
-
-                // Get position and velocity vectors
+                const satrec = twoline2satrec(satellite.line1, satellite.line2);
+                const now = new Date();
                 const positionAndVelocity = propagate(satrec, now);
                 const positionEci = positionAndVelocity.position;
-
+    
                 if (positionEci) {
-                    // Convert ECI to geodetic coordinates (latitude, longitude, altitude)
                     const gmst = gstime(now);
                     const positionGd = eciToGeodetic(positionEci, gmst);
-
+    
                     const latitude = degreesLat(positionGd.latitude);
                     const longitude = degreesLong(positionGd.longitude);
                     const altitude = positionGd.height;
-
-                    console.log(`Satellite ${index} position:`, { latitude, longitude, altitude });
-
-                    return {
+    
+                    // Create satellite mesh
+                    const satelliteMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xff0000,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+    
+                    const satelliteMesh = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.7, 8, 8),
+                        satelliteMaterial
+                    );
+    
+                    // Position the satellite using the globe's coordinate system
+                    const position = this.globe.getCoords(latitude, longitude, (altitude / 6371) * 2);
+                    satelliteMesh.position.set(position.x, position.y, position.z);
+    
+                    // Attach satellite data
+                    satelliteMesh.userData = {
                         id: satellite.satelliteId,
                         name: satellite.name,
                         latitude,
                         longitude,
                         altitude
                     };
-                } else {
-                    console.warn(`No position data for satellite ${index}`);
-                    return null;
+    
+                    this.satellitesGroup.add(satelliteMesh);
                 }
             } catch (error) {
                 console.error(`Failed to process satellite ${index}:`, error);
-                return null;
             }
-        }).filter(sat => sat !== null); // Remove null entries
-
-        // Update globe with processed satellite positions
-        this.globe
-            .objectsData(processedSatellites)
-            .objectLat(d => d.latitude)
-            .objectLng(d => d.longitude)
-            .objectAltitude(d => d.altitude / 6371) // Normalize altitude relative to Earth's radius
-            .objectThreeObject(d => {
-                console.log('Creating satellite mesh for:', d);
-                const satelliteMaterial = new THREE.MeshBasicMaterial({
-                    color: 0xff0000, // Red color
-                    transparent: true,
-                    opacity: 0.8 // Adjust opacity for glowing effect
-                });
-
-                const satelliteMesh = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.7, 8, 8),
-                    satelliteMaterial
-                );
-
-                // Attach satellite data to mesh for reference on click
-                satelliteMesh.userData = d;
-
-                this.satellitesGroup.add(satelliteMesh);
-
-                return satelliteMesh;
-            });
-
-        // Add debug log after setting up objects
-        console.log('Globe objects after update:', this.globe.objectsData());
+        });
     }
 
 
-    onClick(event) {
-        event.preventDefault();
-        // Get mouse position in normalized device coordinates (-1 to +1)
-        const rect = this.renderer.domElement.getBoundingClientRect();
-        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
+    updateWeatherEvents(events) {
+        console.log('Updating weather events:', events);
 
-        // Update the picking ray with the camera and mouse position
-        this.raycaster.setFromCamera(this.mouse, this.camera);
+        // Clear any existing weather visualizations
+        this.globe.hexPolygonsData([]);
 
-        // Calculate objects intersecting the picking ray
+        // Convert events to proper GeoJSON format
+        const hexPolygons = events.map(event => ({
+            type: 'Feature',
+            geometry: {
+                type: 'Polygon',
+                coordinates: [[  // Triple array for GeoJSON Polygon format
+                    [event.coordinates[0], event.coordinates[1]],
+                    [event.coordinates[0] + 2, event.coordinates[1]],
+                    [event.coordinates[0] + 2, event.coordinates[1] + 2],
+                    [event.coordinates[0], event.coordinates[1] + 2],
+                    [event.coordinates[0], event.coordinates[1]]  // Close the polygon
+                ]]
+            },
+            properties: {
+                color: this.getEventColor(event.category),
+                altitude: 0.01,
+                name: event.title
+            }
+        }));
+
+        // Update globe with hexed polygons
+        this.globe
+            .hexPolygonsData(hexPolygons)
+            .hexPolygonGeoJsonGeometry(d => d.geometry)
+            .hexPolygonColor(d => d.properties.color)
+            .hexPolygonAltitude(d => d.properties.altitude)
+            .hexPolygonResolution(3)
+            .hexPolygonMargin(0.2);
+    }
+
+    getEventColor(category) {
+        // Define colors for different event categories
+        const colors = {
+            'severeStorms': '#ff4444',
+            'Severe Storms': '#ff4444',
+            'Volcanoes': '#ff8800',
+            'Wildfires': '#ff0000',
+            // Add more categories as needed
+            'default': '#ffaa00'
+        };
+
+        return colors[category?.toLowerCase()] || colors.default;
+    }
+
+    handleSatelliteClick() {
+        if (!this.satellitesGroup) return;
+        
         const intersects = this.raycaster.intersectObjects(this.satellitesGroup.children, true);
-
+        
         if (intersects.length > 0) {
             const selectedSatellite = intersects[0].object.userData;
             console.log('Satellite clicked:', selectedSatellite);
             if (this.onSatelliteClick) {
                 this.onSatelliteClick(selectedSatellite);
             }
-
-            // Update visual state for selected satellite
             this.selectSatellite(intersects[0].object);
         }
     }
+    
+    handleWeatherClick() {
+        // Implement weather-specific click handling
+        const intersects = this.raycaster.intersectObjects(this.globe.children, true);
+        
+        if (intersects.length > 0) {
+            const clickedObject = intersects[0].object;
+            // Handle weather event clicks
+            if (clickedObject.userData.weatherEvent) {
+                console.log('Weather event clicked:', clickedObject.userData.weatherEvent);
+                // Implement weather event click handling
+            }
+        }
+    }
+    
+    handleDefaultClick() {
+        // Implement default click behavior
+        const intersects = this.raycaster.intersectObject(this.globe, true);
+        
+        if (intersects.length > 0) {
+            const lat = intersects[0].point.y;
+            const lon = intersects[0].point.x;
+            console.log('Globe clicked at position:', { lat, lon });
+            // Implement any default click behavior
+        }
+    }
 
-    onMouseMove(event) {
-        event.preventDefault();
+    onClick(event) {
+        console.log('Click event detected:');
+    
         // Get mouse position in normalized device coordinates (-1 to +1)
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
+    
         // Update the picking ray with the camera and mouse position
         this.raycaster.setFromCamera(this.mouse, this.camera);
-
-        // Calculate objects intersecting the picking ray
-        const intersects = this.raycaster.intersectObjects(this.satellitesGroup.children, true);
-
-        if (intersects.length > 0) {
-            const hoveredObject = intersects[0].object;
-            if (this.hoveredSatellite !== hoveredObject) {
-                // Reset previous hovered satellite
-                if (this.hoveredSatellite && this.hoveredSatellite !== this.selectedSatellite) {
-                    this.hoveredSatellite.material.color.set(0xff0000); // Original color
-                    this.hoveredSatellite.scale.set(1, 1, 1); // Original scale
+    
+        // Handle clicks based on current mode
+        switch (this.currentMode) {
+            case 'satellite':
+                if (this.satellitesGroup) {
+                    const intersects = this.raycaster.intersectObjects(this.satellitesGroup.children, true);
+                    if (intersects.length > 0) {
+                        const selectedSatellite = intersects[0].object.userData;
+                        console.log('Satellite clicked:', selectedSatellite);
+                        if (this.onSatelliteClick) {
+                            this.onSatelliteClick(selectedSatellite);
+                        }
+                        this.selectSatellite(intersects[0].object);
+                    }
                 }
+                break;
+    
+            case 'weather':
+                this.handleWeatherClick();
+                break;
+    
+            case 'default':
+            default:
+                this.handleDefaultClick();
+                break;
+        }
+    }
 
-                // Set new hovered satellite
-                this.hoveredSatellite = hoveredObject;
-                if (this.hoveredSatellite !== this.selectedSatellite) {
-                    this.hoveredSatellite.material.color.set(0x66b2ff); // Pale blue
-                    this.hoveredSatellite.scale.set(1.3, 1.3, 1.3); // Slightly bigger
+    onMouseMove(event) {
+        // Get mouse position in normalized device coordinates (-1 to +1)
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+        // Update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+    
+        switch (this.currentMode) {
+            case 'satellite':
+                if (this.satellitesGroup) {
+                    const intersects = this.raycaster.intersectObjects(this.satellitesGroup.children, true);
+    
+                    if (intersects.length > 0) {
+                        const hoveredObject = intersects[0].object;
+                        if (this.hoveredSatellite !== hoveredObject) {
+                            // Reset previous hovered satellite
+                            if (this.hoveredSatellite && this.hoveredSatellite !== this.selectedSatellite) {
+                                this.hoveredSatellite.material.color.set(0xff0000); // Original color
+                                this.hoveredSatellite.scale.set(1, 1, 1); // Original scale
+                            }
+    
+                            // Set new hovered satellite
+                            this.hoveredSatellite = hoveredObject;
+                            if (this.hoveredSatellite !== this.selectedSatellite) {
+                                this.hoveredSatellite.material.color.set(0x66b2ff); // Pale blue
+                                this.hoveredSatellite.scale.set(1.3, 1.3, 1.3); // Slightly bigger
+                            }
+                        }
+                    } else {
+                        // Reset previous hovered satellite
+                        if (this.hoveredSatellite && this.hoveredSatellite !== this.selectedSatellite) {
+                            this.hoveredSatellite.material.color.set(0xff0000); // Original color
+                            this.hoveredSatellite.scale.set(1, 1, 1); // Original scale
+                            this.hoveredSatellite = null;
+                        }
+                    }
                 }
-            }
-        } else {
-            // Reset previous hovered satellite
-            if (this.hoveredSatellite && this.hoveredSatellite !== this.selectedSatellite) {
-                this.hoveredSatellite.material.color.set(0xff0000); // Original color
-                this.hoveredSatellite.scale.set(1, 1, 1); // Original scale
-                this.hoveredSatellite = null;
-            }
+                break;
+    
+            case 'weather':
+                // Handle weather event hovering
+                const weatherIntersects = this.raycaster.intersectObjects(this.globe.children, true);
+                if (weatherIntersects.length > 0) {
+                    const hoveredObject = weatherIntersects[0].object;
+                    if (hoveredObject.userData.weatherEvent) {
+                        // Add hover effect for weather events
+                        document.body.style.cursor = 'pointer';
+                        // You could also add visual feedback here
+                    } else {
+                        document.body.style.cursor = 'default';
+                    }
+                } else {
+                    document.body.style.cursor = 'default';
+                }
+                break;
+    
+            case 'default':
+                // Handle default globe hovering
+                const globeIntersects = this.raycaster.intersectObject(this.globe, true);
+                if (globeIntersects.length > 0) {
+                    // You could show coordinates or add other hover effects
+                    document.body.style.cursor = 'pointer';
+                } else {
+                    document.body.style.cursor = 'default';
+                }
+                break;
         }
     }
 

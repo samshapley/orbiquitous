@@ -75,25 +75,29 @@ canvas {
 }
 
 
+/* Update the satellite-info styling */
 .satellite-info {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
+    position: fixed;
+    top: 80px;
+    right: -320px; /* Start off-screen */
     background: rgba(0, 0, 0, 0.8);
     color: #fff;
     padding: 20px;
     border-radius: 8px;
-    display: none; /* Initially hidden */
-    z-index: 10; /* Ensure it's above other elements */
+    width: 300px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease-in-out;
 }
 
 .satellite-info.visible {
+    right: 20px; /* Slide in */
     display: block;
 }
 
 .satellite-info.hidden {
-    display: none;
+    right: -320px; /* Slide out */
 }
 
 /* Ensure the renderer canvas covers the container */
@@ -119,7 +123,9 @@ canvas {
     height: 100%;
     top: 0;
     left: 0;
-    position: absolute
+    position: absolute;
+    pointer-events: all;
+    z-index: 1;
 }
 
 #globe-container {
@@ -127,6 +133,8 @@ canvas {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    pointer-events: all;
+    z-index: 0; /* Base z-index */
 }
 
 #globeViz canvas {
@@ -135,12 +143,8 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1; /* Ensure it's behind control buttons and info panels */
-    pointer-events: auto; /* Allow the canvas to capture events */
-}
-
-#globe-container.shifted {
-    width: calc(100vw - 300px);
+    z-index: 1;
+    pointer-events: all;
 }
 
 /* Control Button should be above the canvas */
@@ -155,10 +159,38 @@ canvas {
     border-radius: 5px;
     font-family: 'Orbitron', sans-serif;
     cursor: pointer;
-    z-index: 1000; /* Higher than canvas */
+    z-index: 1000;
     transition: all 0.3s ease;
 }
 
 .control-button:hover {
     background-color: rgba(0, 255, 255, 0.2);
+}
+
+.mode-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.mode-button {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: 1px solid #00ffff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-button:hover {
+    background-color: rgba(0, 255, 255, 0.2);
+}
+
+.mode-button.active {
+    background-color: rgba(0, 255, 255, 0.3);
 }

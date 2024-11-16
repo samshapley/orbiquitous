@@ -37,13 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
             case '':
                 globeContainer.style.display = 'block';
                 document.querySelector('[data-page="home"]').classList.add('active');
-                app.initialize();
                 break;
 
             default:
                 globeContainer.style.display = 'block';
                 document.querySelector('[data-page="home"]').classList.add('active');
-                app.initialize();
                 break;
         }
     };
