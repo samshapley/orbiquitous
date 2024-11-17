@@ -1,5 +1,5 @@
 import App from './src/App.js';
-import { getSatelliteChatResponse, resetConversation } from './groq_api.js';
+import { getSatelliteChatResponse, getTechChatResponse, resetConversation } from './groq_api.js';
 
 // Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -65,6 +65,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const assistantMessageDiv = document.createElement('div');
         assistantMessageDiv.className = 'message assistant-message';
         chatMessages.appendChild(assistantMessageDiv);
+
+        // Add loading bar container
+        const loadingBar = document.createElement('div');
+        loadingBar.className = 'tool-call-loading';
+        loadingBar.style.display = 'none';
+        assistantMessageDiv.appendChild(loadingBar);
     
         try {
             // Get satellite data from the globe's satellitesGroup
@@ -91,9 +97,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 satelliteData, 
                 selectedSatellite,
                 (newSatellites) => {
+                    // Show loading bar during tool call
+                    loadingBar.style.display = 'block';
+                    
                     if (app?.earth) {
                         app.earth.updateSatellites(newSatellites);
                     }
+
                 }
             );
             
@@ -108,7 +118,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
+            loadingBar.style.display = 'none';
         } catch (error) {
+            loadingBar.style.display = 'none';
             console.error('Chat error:', error);
             assistantMessageDiv.textContent = 'Sorry, there was an error processing your request.';
         }
@@ -122,7 +134,94 @@ document.addEventListener('DOMContentLoaded', async () => {
             handleSatelliteChat();
         }
     });
-    
+
+    // Add tech chat functionality
+    const techChatInput = document.getElementById('tech-chat-input');
+    const techSendButton = document.getElementById('tech-send-message');
+    const techChatMessages = document.getElementById('tech-chat-messages');
+
+    if (techChatInput && techSendButton && techChatMessages) {
+        async function handleTechChat() {
+            const message = techChatInput.value.trim();
+            if (!message) return;
+
+            // Get current patent data
+            const tableContainer = document.getElementById('patent-explorer');
+            const selectedPatent = document.querySelector('.patent-row.selected');
+            const patentsData = tableContainer?.patentsData || [];
+            const selectedPatentData = selectedPatent ? 
+                patentsData[selectedPatent.dataset.patentIndex] : null;
+
+            // Add user message to chat
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'message user-message';
+            userMessageDiv.textContent = message;
+            techChatMessages.appendChild(userMessageDiv);
+
+            // Clear input
+            techChatInput.value = '';
+
+            // Create assistant message container
+            const assistantMessageDiv = document.createElement('div');
+            assistantMessageDiv.className = 'message assistant-message';
+            techChatMessages.appendChild(assistantMessageDiv);
+
+            // Add loading bar container
+            const loadingBar = document.createElement('div');
+            loadingBar.className = 'tool-call-loading';
+            loadingBar.style.display = 'none';
+            assistantMessageDiv.appendChild(loadingBar);
+
+            try {
+                let accumulatedText = '';
+                const stream = await getTechChatResponse(
+                    message, 
+                    patentsData, 
+                    selectedPatentData,
+                    (patent) => {
+                        // Show loading bar during tool call
+                        loadingBar.style.display = 'block';
+                        // Find the row with this patent
+                        const patentRow = document.querySelector(`.patent-row[data-patent-index="${patentsData.findIndex(p => p[1] === patent[1])}"]`);
+                        if (patentRow) {
+                            // Simulate click on the row
+                            const clickEvent = new Event('click', { bubbles: true });
+                            patentRow.dispatchEvent(clickEvent);
+                            
+                            // Scroll the row into view
+                            patentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                );
+                
+                for await (const chunk of stream) {
+                    const content = chunk.choices[0]?.delta?.content || "";
+                    accumulatedText += content;
+                    // Render the accumulated markdown
+                    assistantMessageDiv.innerHTML = marked.parse(accumulatedText);
+                    // Syntax highlighting for code blocks (optional)
+                    assistantMessageDiv.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                    techChatMessages.scrollTop = techChatMessages.scrollHeight;
+                }
+                loadingBar.style.display = 'none';
+            } catch (error) {
+                loadingBar.style.display = 'none';
+                console.error('Tech chat error:', error);
+                assistantMessageDiv.textContent = 'Sorry, there was an error processing your request.';
+            }
+        }
+
+        techSendButton.addEventListener('click', handleTechChat);
+        techChatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleTechChat();
+            }
+        });
+    }
+
     // Handle navigation
     const handleNavigation = (path) => {
         const visualizationContainer = document.getElementById('visualization-container');
@@ -130,6 +229,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const aboutContent = document.getElementById('about-content');
         const navLinks = document.querySelectorAll('nav a');
         const satelliteInfo = document.getElementById('satelliteInfo');
+        const chatPanel = document.getElementById('chat-panel');  // Add this line
+        const toggleChatButton = document.getElementById('toggleChat');  // Add this line
 
         // Remove active class from all links
         navLinks.forEach(link => link.classList.remove('active'));
@@ -140,6 +241,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         aboutContent.style.display = 'none';
         if (satelliteInfo) {
             satelliteInfo.style.display = 'none'; // Ensure info container is hidden on navigation
+        }
+        // Hide chat panel and update button text when switching tabs
+        if (chatPanel) {
+            chatPanel.style.display = 'none';
+            if (toggleChatButton) {
+                toggleChatButton.textContent = 'Talk to Orbit';
+            }
         }
         
         // Show appropriate content based on path

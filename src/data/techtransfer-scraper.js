@@ -109,4 +109,4 @@ export default TechTransferAPI;
 
 // Example usage:
 const techTransferAPI = new TechTransferAPI();
-techTransferAPI.searchPatents('solar').then(console.log).catch(console.error);
+techTransferAPI.searchPatents('', 1000).then(console.log).catch(console.error);
