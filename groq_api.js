@@ -80,24 +80,24 @@ export async function* getSatelliteChatResponse(userMessage, satelliteData, sele
 
 
     // Save prompt to a local file
-    try {
+    // try {
         
-        // Create blob and download it
-        const blob = new Blob([systemPrompt], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `prompt_log_${timestamp}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+    //     // Create blob and download it
+    //     const blob = new Blob([systemPrompt], { type: 'text/plain' });
+    //     const url = URL.createObjectURL(blob);
+    //     const link = document.createElement('a');
+    //     link.href = url;
+    //     link.download = `prompt_log_${timestamp}.txt`;
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+    //     URL.revokeObjectURL(url);
         
-        // Also log to console for immediate debugging
-        console.log('Debug Entry:', { systemPrompt, userMessage, satelliteData });
-    } catch (error) {
-        console.error('Failed to save debug log:', error);
-    }
+    //     // Also log to console for immediate debugging
+    //     console.log('Debug Entry:', { systemPrompt, userMessage, satelliteData });
+    // } catch (error) {
+    //     console.error('Failed to save debug log:', error);
+    // }
  
     try {
         let shouldContinue = true;
@@ -199,14 +199,14 @@ function formatSatelliteData(satellites, selectedSatellite) {
         Position: Lat ${selectedSatellite.latitude?.toFixed(2) || 'Unknown'}, Long ${selectedSatellite.longitude?.toFixed(2) || 'Unknown'}, Alt ${selectedSatellite.altitude?.toFixed(2) || 'Unknown'}km\n\n`;
     }
     
-    output += 'Here are the other satellites currently displayed on the globe:\n\n';
+    output += 'Here are the other satellites currently displayed on the Earth:\n\n';
     
     // Then add other satellites
     output += satellites
-        .filter(sat => !selectedSatellite || sat.satelliteId !== selectedSatellite.id)
+        .filter(sat => !selectedSatellite || sat.id !== selectedSatellite.id)
         .map(sat => {
             const name = sat.name || 'Unknown';
-            const id = sat.satelliteId || sat.satelliteId || 'Unknown';
+            const id = sat.id || sat.id || 'Unknown';
             const lat = sat.latitude ? sat.latitude.toFixed(2) : 'Unknown';
             const long = sat.longitude ? sat.longitude.toFixed(2) : 'Unknown';
             const alt = sat.altitude ? sat.altitude.toFixed(2) : 'Unknown';

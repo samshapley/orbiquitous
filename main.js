@@ -71,12 +71,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const satelliteData = [];
             let selectedSatellite = null;
             
-            if (app?.globe?.satellitesGroup) {
-                app.globe.satellitesGroup.children.forEach(satelliteMesh => {
+            if (app?.earth?.satellitesGroup) {
+                app.earth.satellitesGroup.children.forEach(satelliteMesh => {
                     if (satelliteMesh.userData) {
                         satelliteData.push(satelliteMesh.userData);
                         // Check if this is the selected satellite
-                        if (app.globe.selectedSatellite === satelliteMesh) {
+                        if (app.earth.selectedSatellite === satelliteMesh) {
                             selectedSatellite = satelliteMesh.userData;
                         }
                     }
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 satelliteData, 
                 selectedSatellite,
                 (newSatellites) => {
-                    if (app?.globe) {
-                        app.globe.updateSatellites(newSatellites);
+                    if (app?.earth) {
+                        app.earth.updateSatellites(newSatellites);
                     }
                 }
             );
