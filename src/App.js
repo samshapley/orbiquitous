@@ -1,6 +1,5 @@
-import GlobeVisualization from './components/Globe.js';
+import EarthVisualization from './components/Earth.js';
 import TleAPI from './data/tle-scraper.js';
-import EonetAPI from './data/eonet-scraper.js';
 
 class App {
     constructor() {
@@ -11,7 +10,6 @@ class App {
         // Initialize properties
         this.globe = null;
         this.tleApi = new TleAPI();
-        this.eonetApi = new EonetAPI();
         this.satellitesGroup = null;
 
         // Initialize after a short delay to ensure DOM is ready
@@ -19,19 +17,30 @@ class App {
     }
 
     async init() {
-        // Wait for DOM to be fully loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initializeComponents());
-        } else {
-            this.initializeComponents();
+        // Initialize components
+        this.initializeComponents();
+        
+        // Initialize satellite data
+        try {
+            console.log('Fetching initial satellite data...');
+            const response = await this.tleApi.searchSatellites('Starlink');
+            if (response && response.member) {
+                console.log('Updating globe with initial satellite data:', response.member);
+                this.globe.enableSatelliteMode(this.handleSatelliteClick);
+                this.globe.updateSatellites(response.member);
+            } else {
+                console.warn('No initial satellite data available');
+            }
+        } catch (error) {
+            console.error('Error fetching initial satellite data:', error);
         }
     }
 
     initializeComponents() {
         // Initialize globe only after container is available
-        const globeContainer = document.getElementById('globe-container');
-        if (globeContainer) {
-            this.globe = new GlobeVisualization('globe-container');
+        const earthContainer = document.getElementById('earth-container');
+        if (earthContainer) {
+            this.globe = new EarthVisualization('earth-container');
         }
 
         this.initSatelliteInfoElements();
@@ -46,8 +55,8 @@ class App {
         }
 
         const controls = {
-            'satellite-mode': () => this.enableMode('satellite'),
-            'weather-mode': () => this.enableMode('weather'),
+            'earth-mode': () => this.enableMode('earth'),
+            'mars-mode': () => this.enableMode('mars'),
         };
 
         // Add listeners for each control
@@ -63,82 +72,44 @@ class App {
 
     async enableMode(mode) {
         // Clear current globe state
-        this.globe.clearGlobe();
+        this.globe.clearEarth();
         
-        // Get chat panel
+        // Get containers
+        const earthContainer = document.getElementById('earth-container');
+        const marsContainer = document.getElementById('mars-container');
         const chatPanel = document.getElementById('chat-panel');
+        
+        // Hide chat panel by default
+        if (chatPanel) chatPanel.style.display = 'none';
         
         // Handle different modes
         switch(mode) {
-            case 'satellite':
-                // Show chat panel
-                if (chatPanel) chatPanel.style.display = 'flex';
+            case 'earth':
+                if (earthContainer) earthContainer.style.display = 'block';
+                if (marsContainer) marsContainer.style.display = 'none';
                 
-                // Initialize satellite mode first, then fetch and update data
-                this.globe.enableSatelliteMode(this.handleSatelliteClick);
+                // Re-initialize satellite data
                 try {
-                    console.log('Fetching satellite data...');
+                    this.globe.enableSatelliteMode(this.handleSatelliteClick);
                     const response = await this.tleApi.searchSatellites('Starlink');
                     if (response && response.member) {
-                        console.log('Updating globe with satellite data:', response.member);
                         this.globe.updateSatellites(response.member);
-                    } else {
-                        console.warn('No satellite data available to update globe');
                     }
                 } catch (error) {
                     console.error('Error fetching satellite data:', error);
                 }
                 break;
-            case 'weather':
-                // Hide chat panel
-                if (chatPanel) chatPanel.style.display = 'none';
-                
-                await this.enableWeatherMode();
-                console.log('Weather mode selected');
+
+            case 'mars':
+                if (earthContainer) earthContainer.style.display = 'none';
+                if (marsContainer) marsContainer.style.display = 'block';
                 break;
+            case 'mars':
+                if (earthContainer) earthContainer.style.display = 'none';
+                if (marsContainer) marsContainer.style.display = 'block';
+                break;
+    
         }
-    }
-
-    async enableWeatherMode() {
-        try {
-            if (!this.eonetApi) {
-                throw new Error('EONET API not initialized');
-            }
-    
-            const events = await this.eonetApi.getEvents({
-                status: 'open',
-                category: '',
-                limit: 1000
-            });
-    
-            if (!events || events.length === 0) {
-                console.warn('No weather events found');
-                return;
-            }
-    
-            // Process events to get latest position for each unique event
-            const latestEvents = this.processEvents(events);
-            
-            // Update globe with weather events
-            this.globe.updateWeatherEvents(latestEvents);
-        } catch (error) {
-            console.error('Error fetching weather events:', error);
-            // Optionally add user feedback here
-        }
-    }
-
-    processEvents(events) {
-        // Create a map to store the latest event for each unique ID
-        const eventMap = new Map();
-
-        events.forEach(event => {
-            const existingEvent = eventMap.get(event.id);
-            if (!existingEvent || new Date(event.date) > new Date(existingEvent.date)) {
-                eventMap.set(event.id, event);
-            }
-        });
-
-        return Array.from(eventMap.values());
     }
 
     async initialize() {
@@ -151,10 +122,10 @@ class App {
             
             // Update globe with satellite data
             if (response && response.member) {
-                console.log('Updating globe with satellite data:', response.member);
+                console.log('Updating earth with satellite data:', response.member);
                 this.globe.updateSatellites(response.member);
             } else {
-                console.warn('No satellite data available to update globe');
+                console.warn('No satellite data available to update earth');
             }
         } catch (error) {
             console.error('Error initializing satellites:', error);

@@ -17,7 +17,7 @@
         <nav>
             <div class="logo">Orbiquitous</div>
             <ul>
-                <li><a href="/" class="active" data-page="home">Home</a></li>
+                <li><a href="/" class="active" data-page="home">Orbital Explorer</a></li>
                 <li><a href="/learn" data-page="learn">Learn</a></li>
                 <li><a href="/about" data-page="about">About</a></li>
             </ul>
@@ -32,12 +32,27 @@
             </button>
         </div>
     </div>
-    <div id="globe-container">
-        <div id="globeViz"></div>
-        <button id="toggleRotation" class="control-button">Stop Rotation</button>
+    <!-- Create a main container for all visualizations -->
+    <div id="visualization-container">
+        <div id="earth-container">
+            <div id="earthViz"></div>
+        </div>
+        <div id="mars-container" style="display: none">
+            <div id="marsViz"></div>
+        </div>
+        
+        <!-- Move control buttons outside specific containers -->
+        <div class="control-buttons">
+            <button id="toggleRotation" class="control-button">Stop Rotation</button>
+            <button id="toggleChat" class="control-button">Talk to Orbit</button>
+        </div>
+        
+        <!-- Mode controls -->
+        <div id="mode-controls" class="mode-controls">
+            <button id="earth-mode" class="mode-button">Earth</button>
+            <button id="mars-mode" class="mode-button">Mars</button>
+        </div>
     </div>
-
-    <!-- New Satellite Info Container -->
     <div id="satelliteInfo" class="satellite-info hidden">
         <button id="closeInfo">×</button>
         <h2 id="satelliteName">Satellite Name</h2>
@@ -47,14 +62,6 @@
         <p><strong>Longitude:</strong> <span id="satelliteLng"></span></p>
         <p><strong>Altitude:</strong> <span id="satelliteAlt"></span> km</p>
     </div>
-    <div id="weatherInfo" class="weather-info hidden">
-        <button id="closeWeatherInfo">×</button>
-        <h2>Weather Information</h2>
-        <hr>
-        <p><strong>Temperature:</strong> <span id="temperature"></span></p>
-        <p><strong>Conditions:</strong> <span id="conditions"></span></p>
-        <p><strong>Location:</strong> <span id="location"></span></p>
-    </div>
     <div id="learn-content" class="page-content" style="display: none">
         <h1>Learn About Satellites</h1>
         <p>This is the learning page placeholder content.</p>
@@ -62,11 +69,6 @@
     <div id="about-content" class="page-content" style="display: none">
         <h1>About Us</h1>
         <p>This is the about page placeholder content.</p>
-    </div>
-    <!-- Add this before the closing body tag -->
-    <div id="mode-controls" class="mode-controls">
-        <button id="satellite-mode" class="mode-button">Satellites</button>
-        <button id="weather-mode" class="mode-button">Weather</button>
     </div>
 </body>
 </html>
