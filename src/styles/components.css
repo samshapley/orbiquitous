@@ -1,0 +1,110 @@
+.control-buttons {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.control-button {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: 1px solid #00ffff;
+    padding: 10px;
+    width: 42px;
+    height: 42px;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-button:hover {
+    background-color: rgba(0, 255, 255, 0.2);
+}
+
+.mode-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.mode-button {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: 1px solid #00ffff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-button:hover {
+    background-color: rgba(0, 255, 255, 0.2);
+}
+
+.mode-button.active {
+    background-color: rgba(0, 255, 255, 0.3);
+}
+
+.satellite-info {
+    position: fixed;
+    top: 80px;
+    right: -320px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease-in-out;
+}
+
+
+.satellite-info.visible {
+    right: 20px; /* Slide in */
+    display: block;
+}
+
+.satellite-info.hidden {
+    right: -320px; /* Slide out */
+}
+
+/* Ensure the renderer canvas covers the container */
+#earth-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.satellite-info button#closeInfo {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+#loadSatellites {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid #00ffff;
+    color: white;
+}
+
+#loadSatellites:hover {
+    background-color: rgba(0, 255, 255, 0.2);
+}
+

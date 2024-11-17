@@ -1,0 +1,30 @@
+.hidden {
+    display: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000000;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.page-content {
+    color: white;
+    padding: 6rem 2rem 2rem;
+    font-family: 'Orbitron', sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.page-content h1 {
+    color: #00ffff;
+    margin-bottom: 2rem;
+}

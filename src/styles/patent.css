@@ -1,0 +1,72 @@
+.patent-explorer-section {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.patent-table-container {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Make the table occupy the full size of its container */
+.patent-table-container table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+}
+
+/* Ensure table rows and cells expand to fill the table */
+.patent-table-container tbody, 
+.patent-table-container thead {
+    height: 100%;
+}
+
+.patent-table-container tbody tr, 
+.patent-table-container thead tr {
+    height: 25%; /* Distribute rows evenly; adjust as needed */
+}
+
+.patent-table-container th, 
+.patent-table-container td {
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+/* Optional: If you want the table to have a fixed header and scrollable body */
+.patent-table-container thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.8);
+    height: auto; /* Remove fixed height */
+}
+
+.patent-table-container tbody {
+    display: block;
+    overflow-y: auto;
+    height: calc(100% - 50px); /* Adjust based on the header height */
+}
+
+.patent-table-container thead, 
+.patent-table-container tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    height: auto;
+}

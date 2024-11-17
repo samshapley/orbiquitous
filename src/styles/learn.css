@@ -1,0 +1,51 @@
+#learn-content {
+    padding: 60px 0 0 0;
+    max-width: 100%;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.learn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    padding: 20px; 
+    box-sizing: border-box;
+}
+
+.quadrant {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.quadrant-00 {
+    border-color: #ff0000; /* Optional: Red border for quadrant 00 */
+    /* Styles specific to quadrant 00 */
+}
+
+.quadrant-01 {
+    border-color: #00ff00; /* Optional: Green border for quadrant 01 */
+    /* Styles specific to quadrant 01 */
+}
+
+.quadrant-10 {
+    border-color: #0000ff; /* Optional: Blue border for quadrant 10 */
+    /* Styles specific to quadrant 10 */
+}
+
+.quadrant-11 {
+    border-color: #ffff00; /* Optional: Yellow border for quadrant 11 */
+    /* Styles specific to quadrant 11 */
+}

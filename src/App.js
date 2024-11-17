@@ -63,6 +63,7 @@ class App {
 
         this.initSatelliteInfoElements();
         this.initControlPanel();
+        this.initLearnPage();
     }
 
     initControlPanel() {
@@ -87,6 +88,53 @@ class App {
                 console.error(`Control button "${id}" not found`);
             }
         });
+    }
+
+    async initLearnPage() {
+        const learnContent = document.getElementById('learn-content');
+        if (!learnContent) return;
+    
+        try {
+            const TechTransferAPI = (await import('./data/techtransfer-scraper.js')).default;
+            const api = new TechTransferAPI();
+            const { results } = await api.searchPatents();
+            
+            if (results && results.length > 0) {
+                this.updatePatentTable(results);
+            }
+        } catch (error) {
+            console.error('Error loading patent data:', error);
+        }
+    }
+    
+    updatePatentTable(patents) {
+        const tableContainer = document.getElementById('patent-explorer');
+        if (!tableContainer) return;
+    
+        const tableHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Center</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${patents.map(patent => `
+                        <tr>
+                            <td>${patent[2] || 'N/A'}</td>
+                            <td>${patent[1] || 'N/A'}</td>
+                            <td>${patent[5] || 'N/A'}</td>
+                            <td>${patent[9] || 'N/A'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    
+        tableContainer.innerHTML = tableHTML;
     }
 
     async enableMode(mode) {
