@@ -22,6 +22,22 @@ canvas {
     font-family: 'Orbitron', sans-serif;
     max-width: 800px;
     margin: 0 auto;
+    font-size: 1.1rem; /* Increase font size */
+    font-family: 'Nunito', sans-serif;
+    line-height: 1.6; /* Improve line spacing */
+}
+
+.page-content p {
+    margin-bottom: 1.5rem; /* Add more space between paragraphs */
+}
+
+.page-content ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem; /* Add more space below lists */
+}
+
+.page-content li {
+    margin-bottom: 0.5rem; /* Add space between list items */
 }
 
 .page-content h1 {
