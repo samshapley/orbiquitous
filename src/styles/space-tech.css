@@ -103,7 +103,7 @@
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     font-size: 0.7rem;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    border-bottom: 1px solid rgb(17, 48, 188);
     min-height: 0;
 }
 
@@ -118,7 +118,7 @@
 .tech-chat-panel #tech-chat-input {
     flex-grow: 1;
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    border: 1px solid rgb(255, 255, 255);
     border-radius: 4px;
     color: white;
     padding: 8px;
@@ -129,9 +129,9 @@
 }
 
 .tech-chat-panel #tech-send-message {
-    background: rgba(0, 255, 255, 0.2);
+    background: rgb(215, 215, 210);
     border-radius: 4px;
-    color: white;
+    color: rgb(0, 0, 0);
     width: 40px;
     cursor: pointer;
     display: flex;
@@ -144,7 +144,7 @@
 }
 
 .quadrant-11 {
-    border-color: #ffff00; /* Optional: Yellow border for quadrant 11 */
+    border-color: #ffffff; /* Optional: Yellow border for quadrant 11 */
     /* Styles specific to quadrant 11 */
 }
 
@@ -190,4 +190,32 @@
     100% {
         background-position: -200% 0;
     }
+}
+
+.curriculum-container {
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.curriculum-container h1,
+.curriculum-container h2,
+.curriculum-container h3 {
+    color: #00ff00;
+    margin-top: 0em;
+    margin-bottom: 0.5em;
+}
+
+.curriculum-container ul,
+.curriculum-container ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.curriculum-container p {
+    margin-bottom: 1em;
 }

@@ -240,6 +240,27 @@ const tech_tools = [
                 required: ["patentId"],
             },
         },
+    },
+    {
+        type: "function",
+        function: {
+            name: "create_curriculum",
+            description: "This tool should be called to create a curriculum based on a particular patent",
+            parameters: {
+                type: "object",
+                properties: {
+                    patentId: {
+                        type: "string",
+                        description: "The ID of the patent to base the curriculum on",
+                    },
+                    topic: {
+                        type: "string",
+                        description: "The topic of the curriculum",
+                    }
+                },
+                required: ["patentId", "topic"],
+            },
+        },
     }
 ];
 
@@ -248,9 +269,9 @@ You are Orbit, an AI assistant for Space. Introduce yourself to the user as Orbi
 This session is for discussion of technical concepts via actual NASA patents as a grounding point.
 Answer all questions in a technical manner, and provide detailed explanations where necessary.
 You have the ability to select a specific patent for further discussion. Do this if the user asks for more information about a specific patent, or for you to choose a patent.
-`
+You can also create a curriculum based on a specific patent and topic. When the curriculum is provided back to you, do not repeat it. Instead, ask the user if they would like to begin the curriculum.`
 
-export async function* getTechChatResponse(userMessage, patents=[], selectedPatent=null, onPatentSelect) {
+export async function* getTechChatResponse(userMessage, patents=[], selectedPatent=null, onPatentSelect, onCurriculumStart) {
     const patentContext = formatPatentData(patents, selectedPatent);
     const systemPrompt = TECH_CHAT_SYSTEM_PROMPT;
     
@@ -291,32 +312,13 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
     });
 
 
-    // Save prompt to a local file
-    // try {
-        
-    //     // Create blob and download it
-    //     const blob = new Blob([systemPrompt], { type: 'text/plain' });
-    //     const url = URL.createObjectURL(blob);
-    //     const link = document.createElement('a');
-    //     link.href = url;
-    //     link.download = `prompt_log_${timestamp}.txt`;
-    //     document.body.appendChild(link);
-    //     link.click();
-    //     document.body.removeChild(link);
-    //     URL.revokeObjectURL(url);
-        
-    //     // Also log to console for immediate debugging
-    //     console.log('Debug Entry:', { systemPrompt, userMessage, satelliteData });
-    // } catch (error) {
-    //     console.error('Failed to save debug log:', error);
-    // }
- 
+
     try {
         let shouldContinue = true;
         let fullResponse = '';
         
         while (shouldContinue) {
-            console.log('Sending messages to GROQ:', conversationHistory);
+            console.log('Sending messages to TechChatResponse:', conversationHistory);
             const response = await groq.chat.completions.create({
                 messages: conversationHistory,
                 model: "llama-3.1-70b-versatile",
@@ -337,11 +339,12 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
                 if (chunk.choices[0]?.delta?.tool_calls) {
                     console.log('Tool call found:', chunk.choices[0].delta.tool_calls);
                     const toolCall = chunk.choices[0].delta.tool_calls[0];
+
                     if (toolCall?.function?.name === 'select_patent') {
                         toolCallFound = true;
                         currentToolCall = toolCall;
                         const args = JSON.parse(toolCall.function.arguments);
-                        
+
                         // Find the patent in the patents array
                         const patent = patents.find(p => p[1] === args.patentId);
                         
@@ -355,24 +358,50 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
                             tool_call_id: toolCall.id,
                             content: patent ? JSON.stringify(patent) : "Patent not found"
                         });
+                    } else if (toolCall?.function?.name === 'create_curriculum') {
+                        toolCallFound = true;
+                        currentToolCall = toolCall;
+                        const args = JSON.parse(toolCall.function.arguments);
+                        
+                        // Call onCurriculumStart callback before starting curriculum
+                        if (onCurriculumStart) {
+                            onCurriculumStart(args.patentId, args.topic);
+                        }
+                        
+                        // Generate curriculum content
+                        let curriculumContent = '';
+                        for await (const curriculumChunk of getCurriculumResponse(args.patentId, args.topic, patents)) {
+                            if (curriculumChunk.choices[0]?.delta?.content) {
+                                curriculumContent += curriculumChunk.choices[0].delta.content;
+                            }
+                        }
+                                            
+
+                        // Add curriculum response to conversation history
+                        conversationHistory.push({
+                            role: "tool",
+                            name: "create_curriculum",
+                            tool_call_id: toolCall.id,
+                            content: curriculumContent + 'This curriculum has been created and provided to the user. Do not repeat it";'
+                        });
                     }
+
                 }
-                
+
                 if (chunk.choices[0]?.delta?.content) {
                     fullResponse += chunk.choices[0].delta.content;
                     yield chunk;
                 }
-
             }
             
-            // Store assistant response in conversation history
+            // Store assistant response in conversation history if not empty
             if (fullResponse.trim()) {
                 conversationHistory.push({
                     role: "assistant",
                     content: fullResponse
                 });
             }
-
+            
             // If no tool call was found, we're done
             shouldContinue = toolCallFound;  // Changed this line - remove the response check
             // Reset fullResponse for the next iteration if we're continuing
@@ -380,7 +409,7 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
                 fullResponse = '';
             }
 
-        
+
         }
 
         return fullResponse;
@@ -419,4 +448,73 @@ function formatPatentData(patents, selectedPatent) {
         }).join('\n\n');
     
     return output;
+}
+
+
+const CURRICULUM_SYSTEM_PROMPT = `--- Time: ${timestamp} ---
+You are Orbit, an AI curriculum designer for Space Technology Education.
+Your task is to create a detailed curriculum based on the provided NASA patent and topic.
+Structure your response in markdown format with clear sections including:
+1. Learning Objectives
+2. Prerequisites
+3. Course Outline (with multiple modules)
+4. Hands-on Activities
+5. Assessment Methods
+6. Additional Resources
+
+Make the curriculum technically accurate but accessible to the target audience.
+End your response with <COMPLETE> to signal completion.`;
+
+export async function* getCurriculumResponse(patentId, topic, patents) {
+    // Find the patent in the patents array
+    const patent = patents.find(p => p[1] === patentId);
+    if (!patent) {
+        throw new Error('Patent not found');
+    }
+
+    const patentContext = `Create a curriculum based on this NASA patent:
+    Title: ${patent[2]}
+    ID: ${patent[1]}
+    Description: ${patent[3]}
+    Category: ${patent[5]}
+    Center: ${patent[9]}
+    
+    Topic focus: ${topic}`;
+
+    const messages = [
+        {
+            role: "system",
+            content: CURRICULUM_SYSTEM_PROMPT
+        },
+        {
+            role: "user",
+            content: patentContext
+        }
+    ];
+
+    try {
+        let fullResponse = '';
+        console.log('Sending messages to getCurriculumResponse:', messages);
+        const response = await groq.chat.completions.create({
+            messages: messages,
+            model: "llama-3.1-70b-versatile",
+            temperature: 0.7,
+            max_tokens: 2048,
+            top_p: 1,
+            stream: true,
+            stop: ["<COMPLETE>"]
+        });
+
+        for await (const chunk of response) {
+            if (chunk.choices[0]?.delta?.content) {
+                fullResponse += chunk.choices[0].delta.content;
+                yield chunk;
+            }
+        }
+
+        return fullResponse;
+    } catch (error) {
+        console.error('Error in getCurriculumResponse:', error);
+        throw error;
+    }
 }

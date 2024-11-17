@@ -1,5 +1,5 @@
 import App from './src/App.js';
-import { getSatelliteChatResponse, getTechChatResponse, resetConversation } from './groq_api.js';
+import { getSatelliteChatResponse, getCurriculumResponse, getTechChatResponse, resetConversation } from './groq_api.js';
 
 // Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -140,6 +140,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const techSendButton = document.getElementById('tech-send-message');
     const techChatMessages = document.getElementById('tech-chat-messages');
 
+    const curriculumContainer = document.createElement('div');
+    curriculumContainer.id = 'curriculum-container';
+    curriculumContainer.className = 'curriculum-container';
+    document.querySelector('.quadrant-11').appendChild(curriculumContainer);
+
     if (techChatInput && techSendButton && techChatMessages) {
         async function handleTechChat() {
             const message = techChatInput.value.trim();
@@ -190,6 +195,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             // Scroll the row into view
                             patentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    },
+                    async (patentId, topic) => {
+                        // Clear previous curriculum
+                        curriculumContainer.innerHTML = '';
+                        const loadingBarDiv = document.createElement('div');
+                        loadingBarDiv.className = 'tool-call-loading';
+                        curriculumContainer.appendChild(loadingBarDiv);
+                
+                        try {
+                            // Stream curriculum to quadrant-11
+                            let curriculumText = '';
+                            const curriculumStream = getCurriculumResponse(patentId, topic, patentsData);
+                            
+                            for await (const chunk of curriculumStream) {
+                                if (chunk.choices[0]?.delta?.content) {
+                                    curriculumText += chunk.choices[0].delta.content;
+                                    // Remove loading bar before updating content
+                                    if (loadingBarDiv) {
+                                        loadingBarDiv.remove();
+                                    }
+                                    curriculumContainer.innerHTML = marked.parse(curriculumText);
+                                    // Syntax highlighting for code blocks (optional)
+                                    curriculumContainer.querySelectorAll('pre code').forEach((block) => {
+                                        hljs.highlightElement(block);
+                                    });
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error streaming curriculum:', error);
+                            curriculumContainer.innerHTML = 'Error generating curriculum';
+                        } finally {
+                            // Ensure loading bar is removed even if there's an error
+                            if (loadingBarDiv) {
+                                loadingBarDiv.remove();
+                            }
                         }
                     }
                 );
