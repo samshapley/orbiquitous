@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Handle navigation
     const handleNavigation = (path) => {
-        const earthContainer = document.getElementById('earth-container');
+        const visualizationContainer = document.getElementById('visualization-container');
         const learnContent = document.getElementById('learn-content');
         const aboutContent = document.getElementById('about-content');
         const navLinks = document.querySelectorAll('nav a');
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         navLinks.forEach(link => link.classList.remove('active'));
         
         // Hide all content first
-        earthContainer.style.display = 'none';
+        visualizationContainer.style.display = 'none';
         learnContent.style.display = 'none';
         aboutContent.style.display = 'none';
         if (satelliteInfo) {
@@ -152,15 +152,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 aboutContent.style.display = 'block';
                 document.querySelector('[data-page="about"]').classList.add('active');
                 break;
-            case '/':
-            case '':
-                earthContainer.style.display = 'block';
-                document.querySelector('[data-page="home"]').classList.add('active');
+            case '/orbital-explorer':
+                visualizationContainer.style.display = 'block';
+                document.querySelector('[data-page="orbital-explorer"]').classList.add('active');
                 break;
-
             default:
-                earthContainer.style.display = 'block';
-                document.querySelector('[data-page="home"]').classList.add('active');
+                visualizationContainer.style.display = 'block';
+                document.querySelector('[data-page="orbital-explorer"]').classList.add('active');
                 break;
         }
     };

@@ -101,6 +101,14 @@ class App {
         
         // Hide chat panel by default
         if (chatPanel) chatPanel.style.display = 'none';
+
+        const modeButtons = document.querySelectorAll('.mode-button');
+        modeButtons.forEach(button => {
+            button.classList.remove('active');
+            if (button.id === `${mode}-mode`) {
+                button.classList.add('active');
+            }
+        });
         
         // Handle different modes
         switch(mode) {
