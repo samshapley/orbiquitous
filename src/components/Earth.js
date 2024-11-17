@@ -12,9 +12,12 @@ import {
 
 class EarthVisualization {
     constructor(containerId, onSatelliteClick) {
+        this.initializeVisualization(containerId, onSatelliteClick);
+    }
+
+    initializeVisualization(containerId, onSatelliteClick) {
         // Initialize scene
         this.scene = new THREE.Scene();
-
         this.currentMode = 'earth';
         
         // Get container and create visualization container
@@ -62,7 +65,7 @@ class EarthVisualization {
         this.vizContainer.appendChild(this.renderer.domElement);
 
         // Initialize globe
-        this.globe = new ThreeGlobe()
+        this.earth = new ThreeGlobe()
             .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg', () => {
                 this.initializeClouds();
             })
@@ -75,17 +78,17 @@ class EarthVisualization {
             }));
 
         // Set Earth's axial tilt (23.5 degrees)
-        this.globe.rotation.x = THREE.MathUtils.degToRad(23.5);
+        this.earth.rotation.x = THREE.MathUtils.degToRad(23.5);
 
         // Create a container for the globe to handle rotation
         this.earthContainer = new THREE.Object3D();
-        this.earthContainer.add(this.globe);
+        this.earthContainer.add(this.earth);
         
         // Add container to scene instead of globe directly
         this.scene.add(this.earthContainer);
 
         // Adjust globe size
-        this.globe.scale.set(1.2, 1.2, 1.2);
+        this.earth.scale.set(1.2, 1.2, 1.2);
 
         // Enhanced lighting
         const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8);
@@ -155,7 +158,7 @@ class EarthVisualization {
     initializeClouds() {
         // Create clouds mesh
         this.clouds = new THREE.Mesh(
-            new THREE.SphereGeometry(this.globe.getGlobeRadius() * (1 + this.CLOUDS_ALT), 75, 75),
+            new THREE.SphereGeometry(this.earth.getGlobeRadius() * (1 + this.CLOUDS_ALT), 75, 75),
             new THREE.MeshPhongMaterial({
                 transparent: true,
                 opacity: 0  // Start completely transparent
@@ -185,7 +188,7 @@ class EarthVisualization {
             while(this.satellitesGroup.children.length) {
                 this.satellitesGroup.remove(this.satellitesGroup.children[0]);
             }
-            this.globe.remove(this.satellitesGroup);
+            this.earth.remove(this.satellitesGroup);
             this.satellitesGroup = null;
         }
         
@@ -205,7 +208,7 @@ class EarthVisualization {
         this.onSatelliteClick = onSatelliteClick;
         
         this.satellitesGroup = new THREE.Group();
-        this.globe.add(this.satellitesGroup);
+        this.earth.add(this.satellitesGroup);
         
         this.renderer.domElement.style.pointerEvents = 'auto';
     }
@@ -239,7 +242,7 @@ class EarthVisualization {
         this.satellitesGroup = new THREE.Group();
         
         // Add to the earth object instead of the scene
-        this.globe.add(this.satellitesGroup);
+        this.earth.add(this.satellitesGroup);
         
         console.log('Satellite group initialized:', this.satellitesGroup);
     }
@@ -282,7 +285,7 @@ class EarthVisualization {
                     );
     
                     // Position the satellite using the globe's coordinate system
-                    const position = this.globe.getCoords(latitude, longitude, (altitude / 6371) * 2);
+                    const position = this.earth.getCoords(latitude, longitude, (altitude / 6371) * 2);
                     satelliteMesh.position.set(position.x, position.y, position.z);
     
                     // Attach satellite data
@@ -320,7 +323,7 @@ class EarthVisualization {
         
     handleDefaultClick() {
         // Implement default click behavior
-        const intersects = this.raycaster.intersectObject(this.globe, true);
+        const intersects = this.raycaster.intersectObject(this.earth, true);
         
         if (intersects.length > 0) {
             const lat = intersects[0].point.y;
@@ -500,8 +503,8 @@ class EarthVisualization {
             
             // Ensure clouds match the earths scale and rotation
             if (this.clouds) {
-                this.clouds.scale.copy(this.globe.scale);
-                this.clouds.rotation.copy(this.globe.rotation);
+                this.clouds.scale.copy(this.earth.scale);
+                this.clouds.rotation.copy(this.earth.rotation);
             }
         }
         

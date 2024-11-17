@@ -222,7 +222,7 @@ canvas {
     backdrop-filter: blur(8px);
     border: 1px solid rgba(0, 255, 255, 0.2);
     border-radius: 8px;
-    display: flex;
+    display: none;
     flex-direction: column;
     z-index: 1000;
 }
@@ -356,4 +356,14 @@ canvas {
 #toggleChat {
     width: auto;
     padding: 10px 20px;
+}
+
+#loadSatellites {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid #00ffff;
+    color: white;
+}
+
+#loadSatellites:hover {
+    background-color: rgba(0, 255, 255, 0.2);
 }

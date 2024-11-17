@@ -1,4 +1,6 @@
 import EarthVisualization from './components/Earth.js';
+import MoonVisualization from './components/Moon.js';
+import MarsVisualization from './components/Mars.js';
 import TleAPI from './data/tle-scraper.js';
 
 class App {
@@ -8,31 +10,38 @@ class App {
         this.closeSatelliteInfo = this.closeSatelliteInfo.bind(this);
     
         // Initialize properties
-        this.globe = null;
+        this.earth = null;
+        this.moon = null;
+        this.mars = null;
         this.tleApi = new TleAPI();
         this.satellitesGroup = null;
 
-        // Initialize after a short delay to ensure DOM is ready
         this.init();
     }
 
     async init() {
-        // Initialize components
-        this.initializeComponents();
-        
-        // Initialize satellite data
         try {
-            console.log('Fetching initial satellite data...');
-            const response = await this.tleApi.searchSatellites('Starlink');
-            if (response && response.member) {
-                console.log('Updating globe with initial satellite data:', response.member);
-                this.globe.enableSatelliteMode(this.handleSatelliteClick);
-                this.globe.updateSatellites(response.member);
-            } else {
-                console.warn('No initial satellite data available');
+            // Initialize components first
+            this.initializeComponents();
+            
+            if (this.earth) {
+                this.earth.enableSatelliteMode(this.handleSatelliteClick);
+                // Load initial satellite data
+                try {
+                    const response = await this.tleApi.searchSatellites('Starlink');
+                    if (response && response.member) {
+                        // Delay satellite loading until Earth is ready
+                        setTimeout(() => {
+                            this.earth.updateSatellites(response.member);
+                        }, 1000); // Match this with Earth's loading sequence
+                    }
+                } catch (error) {
+                    console.error('Error fetching initial satellite data:', error);
+                }
             }
+
         } catch (error) {
-            console.error('Error fetching initial satellite data:', error);
+            console.error('Error during initialization:', error);
         }
     }
 
@@ -40,7 +49,18 @@ class App {
         // Initialize globe only after container is available
         const earthContainer = document.getElementById('earth-container');
         if (earthContainer) {
-            this.globe = new EarthVisualization('earth-container');
+            this.earth = new EarthVisualization('earth-container');
+        }
+
+        const moonContainer = document.getElementById('moon-container');
+        if (earthContainer) {
+            this.moon = new MoonVisualization('moon-container');
+        }
+
+        // Initialize Mars visualization
+        const marsContainer = document.getElementById('mars-container');
+        if (marsContainer) {
+            this.mars = new MarsVisualization('mars-container');
         }
 
         this.initSatelliteInfoElements();
@@ -56,6 +76,7 @@ class App {
 
         const controls = {
             'earth-mode': () => this.enableMode('earth'),
+            'moon-mode': () => this.enableMode('moon'),
             'mars-mode': () => this.enableMode('mars'),
         };
 
@@ -72,10 +93,11 @@ class App {
 
     async enableMode(mode) {
         // Clear current globe state
-        this.globe.clearEarth();
+        if (this.earth) this.earth.clearEarth();
         
         // Get containers
         const earthContainer = document.getElementById('earth-container');
+        const moonContainer = document.getElementById('moon-container');
         const marsContainer = document.getElementById('mars-container');
         const chatPanel = document.getElementById('chat-panel');
         
@@ -85,15 +107,31 @@ class App {
         // Handle different modes
         switch(mode) {
             case 'earth':
-                if (earthContainer) earthContainer.style.display = 'block';
                 if (marsContainer) marsContainer.style.display = 'none';
+                if (moonContainer) moonContainer.style.display = 'none';
+                if (earthContainer) earthContainer.style.display = 'block';
+
+                // Pause Moon controls if active
+                if (this.moon?.controls) {
+                    this.moon.controls.autoRotate = false;
+                }
+
+                // Pause Mars controls if active
+                if (this.mars?.controls) {
+                    this.mars.controls.autoRotate = false;
+                }
+
+                // Resume Earth controls 
+                if (this.earth?.controls) {
+                    this.earth.controls.autoRotate = true;
+                }
                 
                 // Re-initialize satellite data
                 try {
-                    this.globe.enableSatelliteMode(this.handleSatelliteClick);
+                    this.earth.enableSatelliteMode(this.handleSatelliteClick);
                     const response = await this.tleApi.searchSatellites('Starlink');
                     if (response && response.member) {
-                        this.globe.updateSatellites(response.member);
+                        this.earth.updateSatellites(response.member);
                     }
                 } catch (error) {
                     console.error('Error fetching satellite data:', error);
@@ -102,33 +140,46 @@ class App {
 
             case 'mars':
                 if (earthContainer) earthContainer.style.display = 'none';
+                if (moonContainer) moonContainer.style.display = 'none';
                 if (marsContainer) marsContainer.style.display = 'block';
+                
+                // Pause Earth controls
+                if (this.earth?.controls) {
+                    this.earth.controls.autoRotate = false;
+                }
+
+                // Pause Moon controls if active
+                if (this.moon?.controls) {
+                    this.moon.controls.autoRotate = false;
+                }
+                
+                // Resume Mars controls
+                if (this.mars?.controls) {
+                    this.mars.controls.autoRotate = true;
+                }
                 break;
-            case 'mars':
+
+            case 'moon':
                 if (earthContainer) earthContainer.style.display = 'none';
-                if (marsContainer) marsContainer.style.display = 'block';
+                if (marsContainer) marsContainer.style.display = 'none';
+                if (moonContainer) moonContainer.style.display = 'block';
+                
+                // Pause Earth controls
+                if (this.earth?.controls) {
+                    this.earth.controls.autoRotate = false;
+                }
+
+                // Pause Mars controls if active
+                if (this.mars?.controls) {
+                    this.mars.controls.autoRotate = false;
+                }
+                
+                // Resume Moon controls
+                if (this.moon?.controls) {
+                    this.moon.controls.autoRotate = true;
+                }
                 break;
     
-        }
-    }
-
-    async initialize() {
-        try {
-            console.log('Initializing App...');
-            
-            // Fetch satellite data
-            const response = await this.tleApi.searchSatellites('Starlink');
-            console.log('API Response in App:', response);
-            
-            // Update globe with satellite data
-            if (response && response.member) {
-                console.log('Updating earth with satellite data:', response.member);
-                this.globe.updateSatellites(response.member);
-            } else {
-                console.warn('No satellite data available to update earth');
-            }
-        } catch (error) {
-            console.error('Error initializing satellites:', error);
         }
     }
 
@@ -195,7 +246,7 @@ class App {
             }, 300); // Match this with your CSS transition duration
         }
         
-        this.globe.resetSelection();
+        this.earth.resetSelection();
     }
 
 }

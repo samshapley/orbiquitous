@@ -4,13 +4,10 @@ import MarsVisualization from './src/components/Mars.js';
 
 // Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
-
-    await new Promise(resolve => setTimeout(resolve, 100));
-
     let app;
-    let marsViz
     try {
-        app = new App();
+        app = new App(); 
+        await app.init();
     } catch (error) {
         console.error('Error initializing app:', error);
     }
@@ -36,81 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-
-    const marsMode = document.getElementById('mars-mode');
-    if (marsMode) {
-        marsMode.addEventListener('click', () => {
-            // Hide Earth
-            const earthContainer = document.getElementById('earth-container');
-            if (earthContainer) {
-                earthContainer.style.display = 'none';
-                // Optionally pause Earth animations/controls
-                if (app?.globe?.controls) {
-                    app.globe.controls.autoRotate = false;
-                }
-            }
-            
-            // Show Mars container
-            const marsContainer = document.getElementById('mars-container');
-            if (marsContainer) {
-                marsContainer.style.display = 'block';
-                
-                if (!marsViz) {
-                    try {
-                        marsViz = new MarsVisualization('mars-container');
-                    } catch (error) {
-                        console.error('Error initializing Mars visualization:', error);
-                    }
-                } else {
-                    // Resume Mars animations/controls
-                    if (marsViz.controls) {
-                        marsViz.controls.autoRotate = true;
-                    }
-                }
-            }
-            
-            // Update mode buttons
-            document.querySelectorAll('.mode-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            marsMode.classList.add('active');
-        });
-    }
-
-    // Earth mode transition
-    const earthMode = document.getElementById('earth-mode');
-    if (earthMode) {
-        earthMode.addEventListener('click', () => {
-            // Show Earth globe
-            const earthContainer = document.getElementById('earth-container');
-            if (earthContainer) {
-                earthContainer.style.display = 'block';
-                // Resume Earth animations/controls
-                if (app?.globe?.controls) {
-                    app.globe.controls.autoRotate = true;
-                }
-            }
-            
-            // Hide Mars container
-            const marsContainer = document.getElementById('mars-container');
-            if (marsContainer) {
-                marsContainer.style.display = 'none';
-                // Optionally pause Mars animations/controls
-                if (marsViz?.controls) {
-                    marsViz.controls.autoRotate = false;
-                }
-            }
-
-            // Update mode buttons
-            document.querySelectorAll('.mode-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            earthMode.classList.add('active');
-        });
-    }
-
-
     // Set Earth mode as initially active
+    const earthMode = document.getElementById('earth-mode');
     if (earthMode) {
         earthMode.classList.add('active');
     }

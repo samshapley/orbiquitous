@@ -51,8 +51,9 @@ class MarsVisualization {
         this.vizContainer.appendChild(this.renderer.domElement);
 
         // Initialize Mars globe
-        this.globe = new ThreeGlobe()
-            .globeImageUrl('/src/assets/lunar_surface.jpg')
+        this.mars = new ThreeGlobe()
+            .globeImageUrl('/src/assets/mars_surface_2.jpg')
+            .bumpImageUrl('/src/assets/mars_bumpmap.jpg')
             .atmosphereColor('#983232')
             .atmosphereAltitude(0.15)
             .globeMaterial(new THREE.MeshPhongMaterial({
@@ -61,14 +62,14 @@ class MarsVisualization {
             }));
 
         // Create a container for the globe to handle rotation
-        this.earthContainer = new THREE.Object3D();
-        this.earthContainer.add(this.globe);
+        this.marsContainer = new THREE.Object3D();
+        this.marsContainer.add(this.mars);
         
         // Add container to scene
-        this.scene.add(this.earthContainer);
+        this.scene.add(this.marsContainer);
 
         // Adjust globe size
-        this.globe.scale.set(1.2, 1.2, 1.2);
+        this.mars.scale.set(1.2, 1.2, 1.2);
 
         // Enhanced lighting
         const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8);
@@ -164,9 +165,9 @@ class MarsVisualization {
         }
 
         // Handle rotation
-        if (this.earthContainer) {
+        if (this.marsContainer) {
             const rotationSpeed = 0.001;
-            this.earthContainer.rotation.y += rotationSpeed;
+            this.marsContainer.rotation.y += rotationSpeed;
         }
         
         this.controls.update();
