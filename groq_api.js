@@ -108,7 +108,7 @@ export async function* getSatelliteChatResponse(userMessage, satelliteData, sele
             console.log('Sending messages to GROQ:', conversationHistory);
             const response = await groq.chat.completions.create({
                 messages: conversationHistory,
-                model: "llama3-groq-70b-8192-tool-use-preview",
+                model: "llama-3.2-90b-vision-preview",
                 temperature: 0.5,
                 max_tokens: 1024,
                 top_p: 1,

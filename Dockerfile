@@ -26,14 +26,21 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Final stage for the production image
-FROM nginx:alpine
+# Remove development dependencies
+RUN npm prune --production
 
-# Copy the built application from the build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+FROM base
 
-# Expose port 80
-EXPOSE 80
+WORKDIR /app
 
-# Start Nginx server
-CMD [ "nginx", "-g", "daemon off;" ]
+# Copy built assets and production node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json .
+COPY --from=build /app/server.js .
+
+# Expose port 8080 (to match fly.toml configuration)
+EXPOSE 8080
+
+# Start the server
+CMD ["node", "server.js"]
