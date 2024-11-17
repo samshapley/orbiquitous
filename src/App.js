@@ -26,7 +26,7 @@ class App {
                 this.earth.enableSatelliteMode(this.handleSatelliteClick);
                 // Load initial satellite data
                 try {
-                    const response = await this.tleApi.searchSatellites('Starlink');
+                    const response = await this.tleApi.searchSatellites();
                     if (response && response.member) {
                         // Delay satellite loading until Earth is ready
                         setTimeout(() => {
@@ -246,7 +246,7 @@ class App {
                 // Re-initialize satellite data
                 try {
                     this.earth.enableSatelliteMode(this.handleSatelliteClick);
-                    const response = await this.tleApi.searchSatellites('Starlink');
+                    const response = await this.tleApi.searchSatellites();
                     if (response && response.member) {
                         this.earth.updateSatellites(response.member);
                     }

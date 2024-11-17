@@ -121,7 +121,6 @@ export async function* getSatelliteChatResponse(userMessage, satelliteData, sele
             });
 
             let toolCallFound = false;
-            let currentToolCall = null;
 
             for await (const chunk of response) {
                 if (chunk.choices[0]?.delta?.tool_calls) {
@@ -129,7 +128,6 @@ export async function* getSatelliteChatResponse(userMessage, satelliteData, sele
                     const toolCall = chunk.choices[0].delta.tool_calls[0];
                     if (toolCall?.function?.name === 'search_satellites') {
                         toolCallFound = true;
-                        currentToolCall = toolCall;
                         const args = JSON.parse(toolCall.function.arguments);
                         const tleApi = new TleAPI();
                         const searchResults = await tleApi.searchSatellites(args.query);
@@ -256,9 +254,13 @@ const tech_tools = [
                     topic: {
                         type: "string",
                         description: "The topic of the curriculum",
+                    },
+                    style: {
+                        type: "string",
+                        description: "The style of the curriculum, ie 'formal' or 'silly' or 'pirate'",
                     }
                 },
-                required: ["patentId", "topic"],
+                required: ["patentId", "topic", "style"],
             },
         },
     }
@@ -269,7 +271,7 @@ You are Orbit, an AI assistant for Space. Introduce yourself to the user as Orbi
 This session is for discussion of technical concepts via actual NASA patents as a grounding point.
 Answer all questions in a technical manner, and provide detailed explanations where necessary.
 You have the ability to select a specific patent for further discussion. Do this if the user asks for more information about a specific patent, or for you to choose a patent.
-You can also create a curriculum based on a specific patent and topic. When the curriculum is provided back to you, do not repeat it. Instead, ask the user if they would like to begin the curriculum.`
+You can also create a curriculum based on a specific patent, topic, and style. When the curriculum is provided back to you, do not repeat it. Instead, ask the user if they would like to begin the curriculum.`
 
 export async function* getTechChatResponse(userMessage, patents=[], selectedPatent=null, onPatentSelect, onCurriculumStart) {
     const patentContext = formatPatentData(patents, selectedPatent);
@@ -333,7 +335,6 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
             });
 
             let toolCallFound = false;
-            let currentToolCall = null;
 
             for await (const chunk of response) {
                 if (chunk.choices[0]?.delta?.tool_calls) {
@@ -342,7 +343,6 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
 
                     if (toolCall?.function?.name === 'select_patent') {
                         toolCallFound = true;
-                        currentToolCall = toolCall;
                         const args = JSON.parse(toolCall.function.arguments);
 
                         // Find the patent in the patents array
@@ -360,30 +360,37 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
                         });
                     } else if (toolCall?.function?.name === 'create_curriculum') {
                         toolCallFound = true;
-                        currentToolCall = toolCall;
                         const args = JSON.parse(toolCall.function.arguments);
                         
-                        // Call onCurriculumStart callback before starting curriculum
-                        if (onCurriculumStart) {
-                            onCurriculumStart(args.patentId, args.topic);
-                        }
-                        
-                        // Generate curriculum content
-                        let curriculumContent = '';
-                        for await (const curriculumChunk of getCurriculumResponse(args.patentId, args.topic, patents)) {
-                            if (curriculumChunk.choices[0]?.delta?.content) {
-                                curriculumContent += curriculumChunk.choices[0].delta.content;
-                            }
-                        }
-                                            
+                        // Add a flag to the conversation history to track if curriculum was generated
+                        const curriculumAlreadyGenerated = conversationHistory.some(
+                            msg => msg.role === "tool" && 
+                            msg.name === "create_curriculum" && 
+                            msg.tool_call_id === toolCall.id
+                        );
 
-                        // Add curriculum response to conversation history
-                        conversationHistory.push({
-                            role: "tool",
-                            name: "create_curriculum",
-                            tool_call_id: toolCall.id,
-                            content: curriculumContent + 'This curriculum has been created and provided to the user. Do not repeat it";'
-                        });
+                        if (!curriculumAlreadyGenerated) {
+                            // Call onCurriculumStart callback before starting curriculum
+                            if (onCurriculumStart) {
+                                onCurriculumStart(args.patentId, args.topic, args.style);
+                            }
+                            
+                            // Generate curriculum content
+                            let curriculumContent = '';
+                            for await (const curriculumChunk of getCurriculumResponse(args.patentId, args.topic, args.style, patents)) {
+                                if (curriculumChunk.choices[0]?.delta?.content) {
+                                    curriculumContent += curriculumChunk.choices[0].delta.content;
+                                }
+                            }
+                                                
+                            // Add curriculum response to conversation history
+                            conversationHistory.push({
+                                role: "tool",
+                                name: "create_curriculum",
+                                tool_call_id: toolCall.id,
+                                content: curriculumContent + '\nThis curriculum has been created and provided to the user. Do not repeat it.'
+                            });
+                        }
                     }
 
                 }
@@ -403,7 +410,7 @@ export async function* getTechChatResponse(userMessage, patents=[], selectedPate
             }
             
             // If no tool call was found, we're done
-            shouldContinue = toolCallFound;  // Changed this line - remove the response check
+            shouldContinue = toolCallFound;
             // Reset fullResponse for the next iteration if we're continuing
             if (shouldContinue) {
                 fullResponse = '';
@@ -453,19 +460,22 @@ function formatPatentData(patents, selectedPatent) {
 
 const CURRICULUM_SYSTEM_PROMPT = `--- Time: ${timestamp} ---
 You are Orbit, an AI curriculum designer for Space Technology Education.
-Your task is to create a detailed curriculum based on the provided NASA patent and topic.
+Your task is to create a detailed curriculum based on the provided NASA patent and topic, with the requested style.
 Structure your response in markdown format with clear sections including:
-1. Learning Objectives
-2. Prerequisites
-3. Course Outline (with multiple modules)
-4. Hands-on Activities
-5. Assessment Methods
-6. Additional Resources
+
+## A fun, jokey title/pun for the curriculum.
+### Learning Objectives
+### Prerequisites
+### Course Outline (with multiple modules)
+### Hands-on Activities
+### Assessment Methods
+### Additional Resources
 
 Make the curriculum technically accurate but accessible to the target audience.
+If the topic is requested as 'silly', feel free to add humor and creativity to the curriculum, with some jokes, emojis, or puns.
 End your response with <COMPLETE> to signal completion.`;
 
-export async function* getCurriculumResponse(patentId, topic, patents) {
+export async function* getCurriculumResponse(patentId, topic, style, patents) {
     // Find the patent in the patents array
     const patent = patents.find(p => p[1] === patentId);
     if (!patent) {
@@ -479,7 +489,9 @@ export async function* getCurriculumResponse(patentId, topic, patents) {
     Category: ${patent[5]}
     Center: ${patent[9]}
     
-    Topic focus: ${topic}`;
+    Topic focus: ${topic}
+    
+    Generate the curriculum with the requested style: ${style}`;
 
     const messages = [
         {

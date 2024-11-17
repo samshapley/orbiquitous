@@ -15,6 +15,8 @@ app.use(compression());
 // Serve static files from the dist directory (after running vite build)
 app.use(express.static(join(__dirname, 'dist')));
 
+app.use('/src/assets', express.static(join(__dirname, 'src', 'assets')));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).send('OK');

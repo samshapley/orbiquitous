@@ -38,6 +38,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json .
 COPY --from=build /app/server.js .
+COPY --from=build /app/src/assets ./src/assets
 
 # Expose port 8080 (to match fly.toml configuration)
 EXPOSE 8080

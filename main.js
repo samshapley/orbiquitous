@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             patentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     },
-                    async (patentId, topic) => {
+                    async (patentId, topic, style) => {
                         // Clear previous curriculum
                         curriculumContainer.innerHTML = '';
                         const loadingBarDiv = document.createElement('div');
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         try {
                             // Stream curriculum to quadrant-11
                             let curriculumText = '';
-                            const curriculumStream = getCurriculumResponse(patentId, topic, patentsData);
+                            const curriculumStream = getCurriculumResponse(patentId, topic, style, patentsData);
                             
                             for await (const chunk of curriculumStream) {
                                 if (chunk.choices[0]?.delta?.content) {
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const handleNavigation = (path) => {
         const visualizationContainer = document.getElementById('visualization-container');
         const spaceTechContent = document.getElementById('space-tech-content');
-        const aboutContent = document.getElementById('about-content');
+        const visionContent = document.getElementById('vision-content');
         const navLinks = document.querySelectorAll('nav a');
         const satelliteInfo = document.getElementById('satelliteInfo');
         const chatPanel = document.getElementById('chat-panel');  // Add this line
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hide all content first
         visualizationContainer.style.display = 'none';
         spaceTechContent.style.display = 'none';
-        aboutContent.style.display = 'none';
+        visionContent.style.display = 'none';
         if (satelliteInfo) {
             satelliteInfo.style.display = 'none'; // Ensure info container is hidden on navigation
         }
@@ -297,9 +297,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 spaceTechContent.style.display = 'block';
                 document.querySelector('[data-page="space-tech"]').classList.add('active');
                 break;
-            case '/about':
-                aboutContent.style.display = 'block';
-                document.querySelector('[data-page="about"]').classList.add('active');
+            case '/vision':
+                visionContent.style.display = 'block';
+                document.querySelector('[data-page="vision"]').classList.add('active');
                 break;
             case '/orbital-explorer':
                 visualizationContainer.style.display = 'block';
