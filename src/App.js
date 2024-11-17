@@ -15,8 +15,6 @@ class App {
         this.mars = null;
         this.tleApi = new TleAPI();
         this.satellitesGroup = null;
-
-        this.init();
     }
 
     async init() {
@@ -47,20 +45,20 @@ class App {
 
     initializeComponents() {
         // Initialize globe only after container is available
-        const earthContainer = document.getElementById('earth-container');
+        const earthContainer = document.getElementById('earthViz');
         if (earthContainer) {
-            this.earth = new EarthVisualization('earth-container');
+            this.earth = new EarthVisualization('earthViz');
         }
 
-        const moonContainer = document.getElementById('moon-container');
-        if (earthContainer) {
-            this.moon = new MoonVisualization('moon-container');
+        const moonContainer = document.getElementById('moonViz');
+        if (moonContainer) {
+            this.moon = new MoonVisualization('moonViz');
         }
 
         // Initialize Mars visualization
-        const marsContainer = document.getElementById('mars-container');
+        const marsContainer = document.getElementById('marsViz');
         if (marsContainer) {
-            this.mars = new MarsVisualization('mars-container');
+            this.mars = new MarsVisualization('marsViz');
         }
 
         this.initSatelliteInfoElements();

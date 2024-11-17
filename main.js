@@ -1,6 +1,5 @@
 import App from './src/App.js';
 import { getSatelliteChatResponse, resetConversation } from './groq_api.js';
-import MarsVisualization from './src/components/Mars.js';
 
 // Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
