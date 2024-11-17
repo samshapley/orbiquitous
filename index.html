@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
     <title>Orbiquitous</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,10 +16,13 @@
 <body>
     <header>
         <nav>
-            <div class="logo">Orbiquitous</div>
+            <div class="logo">
+                <img src="src/assets/favicon.svg" alt="Orbiquitous Logo" class="logo-icon">
+                <span>Orbiquitous</span>
+            </div>
             <ul>
-                <li><a href="/" class="active" data-page="orbital-explorer">Orbital Explorer</a></li>
-                <li><a href="/learn" data-page="learn">Learn</a></li>
+                <li><a href="/orbital-explorer" class="active" data-page="orbital-explorer">Orbital Explorer</a></li>
+                <li><a href="/space-tech" data-page="space-tech">Space Tech</a></li>
                 <li><a href="/about" data-page="about">About</a></li>
             </ul>
         </nav>
@@ -66,8 +70,8 @@
         <p><strong>Longitude:</strong> <span id="satelliteLng"></span></p>
         <p><strong>Altitude:</strong> <span id="satelliteAlt"></span> km</p>
     </div>
-    <div id="learn-content" class="page-content" style="display: none">
-        <div class="learn-grid">
+    <div id="space-tech-content" class="page-content" style="display: none">
+        <div class="space-tech-grid">
             <div class="quadrant quadrant-00">
                 <section class="patent-explorer-section">
                     <div id="patent-explorer" class="patent-table-container">
@@ -75,8 +79,17 @@
                     </div>
                 </section>
             </div>
-            <div class="quadrant quadrant-01">
-                <!-- Empty container for quadrant 01 -->
+            <div class="patent-details">
+                <div class="patent-header">
+                    <h2 id="selected-patent-title">NASA Patents, Unleashed</h2>
+                    <button id="random-patent" class="random-patent-button">
+                        <i class="fas fa-dice"></i>
+                    </button>
+                </div>
+                <div id="selected-patent-description"></div>
+                <a id="selected-patent-link" href="#" target="_blank" class="patent-link-button" style="display: none">
+                    View Patent Details
+                </a>
             </div>
             <div class="quadrant quadrant-10">
                 <!-- Empty container for quadrant 10 -->

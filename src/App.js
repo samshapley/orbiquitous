@@ -91,8 +91,8 @@ class App {
     }
 
     async initLearnPage() {
-        const learnContent = document.getElementById('learn-content');
-        if (!learnContent) return;
+        const spaceTechContent = document.getElementById('space-tech-content');
+        if (!spaceTechContent) return;
     
         try {
             const TechTransferAPI = (await import('./data/techtransfer-scraper.js')).default;
@@ -111,6 +111,7 @@ class App {
         const tableContainer = document.getElementById('patent-explorer');
         if (!tableContainer) return;
     
+        // Create table rows with safer data handling
         const tableHTML = `
             <table>
                 <thead>
@@ -122,8 +123,8 @@ class App {
                     </tr>
                 </thead>
                 <tbody>
-                    ${patents.map(patent => `
-                        <tr>
+                    ${patents.map((patent, index) => `
+                        <tr class="patent-row" data-patent-index="${index}">
                             <td>${patent[2] || 'N/A'}</td>
                             <td>${patent[1] || 'N/A'}</td>
                             <td>${patent[5] || 'N/A'}</td>
@@ -135,6 +136,68 @@ class App {
         `;
     
         tableContainer.innerHTML = tableHTML;
+    
+        // Store patents data separately
+        tableContainer.patentsData = patents;
+    
+        // Add click event listeners
+        const rows = tableContainer.querySelectorAll('.patent-row');
+        rows.forEach(row => {
+            row.addEventListener('click', (event) => {
+                const index = parseInt(row.dataset.patentIndex);
+                const patentData = tableContainer.patentsData[index];
+                if (patentData) {
+                    this.handlePatentClick(patentData, event);
+                }
+            });
+        });
+
+        // Add random patent button functionality
+        const randomButton = document.getElementById('random-patent');
+        if (randomButton) {
+            randomButton.addEventListener('click', () => {
+                const rows = tableContainer.querySelectorAll('.patent-row');
+                if (rows.length) {
+                    const randomIndex = Math.floor(Math.random() * rows.length);
+                    const randomRow = rows[randomIndex];
+                    
+                    // Scroll the row into view
+                    randomRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Simulate click after scrolling
+                    setTimeout(() => {
+                        const clickEvent = new Event('click', { bubbles: true });
+                        randomRow.dispatchEvent(clickEvent);
+                    }, 500);
+                }
+            });
+        }
+
+    }
+
+    handlePatentClick(patentData, event) {
+        console.log('Selected patent:', patentData);
+        document.querySelectorAll('.patent-table-container tbody tr').forEach(row => {
+            row.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked row
+        event.currentTarget.classList.add('selected');
+        
+        // Update the details panel
+        document.getElementById('selected-patent-title').textContent = patentData[2]; // Title
+        document.getElementById('selected-patent-description').textContent = patentData[3]; // Description
+        
+        // Construct NASA Tech Transfer link from patent ID
+        const linkButton = document.getElementById('selected-patent-link');
+        const patentId = patentData[1]; // Get patent ID
+        if (patentId) {
+            const nasaLink = `https://technology.nasa.gov/patent/${patentId}`;
+            linkButton.href = nasaLink;
+            linkButton.style.display = 'block';
+        } else {
+            linkButton.style.display = 'none';
+        }
     }
 
     async enableMode(mode) {

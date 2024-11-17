@@ -70,3 +70,16 @@
     table-layout: fixed;
     height: auto;
 }
+
+.patent-table-container tbody tr {
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.patent-table-container tbody tr:hover {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.patent-table-container tr.selected {
+    background: rgba(0, 255, 255, 0.2);
+}

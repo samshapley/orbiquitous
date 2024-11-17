@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Handle navigation
     const handleNavigation = (path) => {
         const visualizationContainer = document.getElementById('visualization-container');
-        const learnContent = document.getElementById('learn-content');
+        const spaceTechContent = document.getElementById('space-tech-content');
         const aboutContent = document.getElementById('about-content');
         const navLinks = document.querySelectorAll('nav a');
         const satelliteInfo = document.getElementById('satelliteInfo');
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Hide all content first
         visualizationContainer.style.display = 'none';
-        learnContent.style.display = 'none';
+        spaceTechContent.style.display = 'none';
         aboutContent.style.display = 'none';
         if (satelliteInfo) {
             satelliteInfo.style.display = 'none'; // Ensure info container is hidden on navigation
@@ -144,9 +144,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Show appropriate content based on path
         switch(path) {
-            case '/learn':
-                learnContent.style.display = 'block';
-                document.querySelector('[data-page="learn"]').classList.add('active');
+            case '/space-tech':
+                spaceTechContent.style.display = 'block';
+                document.querySelector('[data-page="space-tech"]').classList.add('active');
                 break;
             case '/about':
                 aboutContent.style.display = 'block';
